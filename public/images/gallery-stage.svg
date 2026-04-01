@@ -1,0 +1,18 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#050913"/>
+      <stop offset="1" stop-color="#10172D"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" rx="48" fill="url(#bg)"/>
+  <rect x="140" y="150" width="920" height="30" rx="15" fill="#FFCC66" fill-opacity="0.4"/>
+  <rect x="180" y="220" width="840" height="380" rx="28" fill="#FFFFFF" fill-opacity="0.05"/>
+  <circle cx="300" cy="360" r="90" fill="#FF6B4A" fill-opacity="0.25"/>
+  <circle cx="600" cy="310" r="120" fill="#91E4FF" fill-opacity="0.18"/>
+  <circle cx="850" cy="390" r="70" fill="#FFCC66" fill-opacity="0.28"/>
+  <path d="M160 650H1040" stroke="#FFFFFF" stroke-opacity="0.15" stroke-width="4"/>
+  <text x="140" y="820" fill="#FFF8EE" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="700">Stage Lights</text>
+  <text x="140" y="872" fill="#D8E0F5" font-family="Arial, Helvetica, sans-serif" font-size="28">Opening night atmosphere</text>
+</svg>
+

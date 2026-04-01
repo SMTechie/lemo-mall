@@ -1,0 +1,29 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="100" y1="60" x2="1120" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#10172D"/>
+      <stop offset="1" stop-color="#1D1436"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(860 260) rotate(90) scale(240 240)">
+      <stop stop-color="#91E4FF" stop-opacity="0.30"/>
+      <stop offset="1" stop-color="#91E4FF" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="hoodie" x1="360" y1="180" x2="840" y2="740" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#23273A"/>
+      <stop offset="1" stop-color="#09090B"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" rx="48" fill="url(#bg)"/>
+  <circle cx="860" cy="260" r="240" fill="url(#glow)"/>
+  <circle cx="320" cy="720" r="210" fill="#FF2C55" fill-opacity="0.10"/>
+  <circle cx="680" cy="620" r="170" fill="#FFCC66" fill-opacity="0.07"/>
+  <path d="M420 286C430 224 492 188 600 188C708 188 770 224 780 286L845 370L785 438V720H415V438L355 370L420 286Z" fill="url(#hoodie)" stroke="#F8F4E8" stroke-opacity="0.22" stroke-width="8"/>
+  <path d="M488 226C510 156 690 156 712 226C707 340 493 340 488 226Z" fill="#11182D" stroke="#F8F4E8" stroke-opacity="0.18" stroke-width="8"/>
+  <path d="M520 238C544 268 656 268 680 238" stroke="#FFCC66" stroke-opacity="0.42" stroke-width="10" stroke-linecap="round"/>
+  <path d="M544 362L520 420" stroke="#F8F4E8" stroke-opacity="0.26" stroke-width="6" stroke-linecap="round"/>
+  <path d="M656 362L680 420" stroke="#F8F4E8" stroke-opacity="0.26" stroke-width="6" stroke-linecap="round"/>
+  <rect x="508" y="470" width="184" height="128" rx="40" fill="#0B0B0B" fill-opacity="0.5" stroke="#91E4FF" stroke-opacity="0.24" stroke-width="6"/>
+  <path d="M540 536H660" stroke="#91E4FF" stroke-opacity="0.35" stroke-width="8" stroke-linecap="round"/>
+  <text x="140" y="820" fill="#FFF8EE" font-family="Arial, Helvetica, sans-serif" font-size="70" font-weight="700">Midnight Hoodie</text>
+  <text x="140" y="872" fill="#D8E0F5" font-family="Arial, Helvetica, sans-serif" font-size="28">Brushed fleece / relaxed fit</text>
+</svg>

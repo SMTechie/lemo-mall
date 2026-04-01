@@ -1,0 +1,17 @@
+<svg width="1200" height="900" viewBox="0 0 1200 900" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="900" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0B1020"/>
+      <stop offset="1" stop-color="#1B2B55"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="900" rx="48" fill="url(#bg)"/>
+  <rect x="220" y="180" width="760" height="460" rx="28" fill="#FFFFFF" fill-opacity="0.05"/>
+  <path d="M340 250H860" stroke="#FFCC66" stroke-opacity="0.45" stroke-width="8"/>
+  <path d="M420 330H800" stroke="#91E4FF" stroke-opacity="0.55" stroke-width="10"/>
+  <path d="M380 420H820" stroke="#FF6B4A" stroke-opacity="0.55" stroke-width="10"/>
+  <rect x="520" y="360" width="160" height="200" rx="20" fill="#FFF8EE" fill-opacity="0.16"/>
+  <text x="140" y="820" fill="#FFF8EE" font-family="Arial, Helvetica, sans-serif" font-size="74" font-weight="700">Merch Stall</text>
+  <text x="140" y="872" fill="#D8E0F5" font-family="Arial, Helvetica, sans-serif" font-size="28">Limited drops and bundles</text>
+</svg>
+
