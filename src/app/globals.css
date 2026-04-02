@@ -140,6 +140,198 @@ a {
     0 18px 50px rgba(0, 0, 0, 0.35);
 }
 
+.admin-dashboard {
+  color: #132414;
+  color-scheme: light;
+}
+
+.admin-dashboard [class~="bg-[#ffff00]"] {
+  background-color: #ffff00 !important;
+  color: #0b0b0b !important;
+}
+
+.admin-dashboard [class~="bg-[#ffff00]"] svg {
+  color: #0b0b0b !important;
+}
+
+.admin-dashboard [class~="text-[#ffff00]"],
+.admin-dashboard [class~="text-[#ffcc66]"] {
+  color: #ffff00 !important;
+}
+
+.admin-dashboard [class~="bg-white/6"],
+.admin-dashboard [class~="bg-white/8"],
+.admin-dashboard [class~="bg-white/10"],
+.admin-dashboard [class~="bg-white/12"],
+.admin-dashboard [class~="bg-white/15"],
+.admin-dashboard [class~="bg-[#0b1020]/60"],
+.admin-dashboard [class~="bg-[#0b1020]/70"],
+.admin-dashboard [class~="bg-[#0b1020]/80"],
+.admin-dashboard [class~="bg-black/30"],
+.admin-dashboard [class~="bg-black/40"],
+.admin-dashboard [class~="bg-black/20"],
+.admin-dashboard [class~="bg-[#07111f]/85"] {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  color: #132414 !important;
+  border-color: #d7decf !important;
+}
+
+.admin-dashboard [class~="text-white"],
+.admin-dashboard [class~="text-white/90"],
+.admin-dashboard [class~="text-white/80"],
+.admin-dashboard [class~="text-white/78"],
+.admin-dashboard [class~="text-white/75"],
+.admin-dashboard [class~="text-white/72"],
+.admin-dashboard [class~="text-white/70"],
+.admin-dashboard [class~="text-white/65"],
+.admin-dashboard [class~="text-white/60"],
+.admin-dashboard [class~="text-white/55"],
+.admin-dashboard [class~="text-white/50"],
+.admin-dashboard [class~="text-[#f8f4e8]"] {
+  color: #132414 !important;
+}
+
+.admin-dashboard [class~="border-white/10"],
+.admin-dashboard [class~="border-white/8"],
+.admin-dashboard [class~="border-white/15"],
+.admin-dashboard [class~="border-white/20"],
+.admin-dashboard [class~="border-white/25"] {
+  border-color: #d7decf !important;
+}
+
+.admin-dashboard input:not([type="checkbox"]):not([type="radio"]),
+.admin-dashboard select,
+.admin-dashboard textarea {
+  background: #ffffff !important;
+  color: #132414 !important;
+  border-color: #d7decf !important;
+}
+
+.admin-dashboard input::placeholder,
+.admin-dashboard textarea::placeholder {
+  color: #97a491 !important;
+}
+
+.admin-dashboard input[type="checkbox"],
+.admin-dashboard input[type="radio"] {
+  accent-color: #7f9a65;
+}
+
+.admin-dashboard[data-theme="dark"] {
+  color: #f3f7ef;
+  color-scheme: dark;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-white"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/6"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/8"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/10"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/12"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/15"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/20"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/25"],
+.admin-dashboard[data-theme="dark"] [class~="bg-white/82"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#ffffff]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f7f9f3]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#eef3e7]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f3f7ef]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#e3ead8]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#dce5cf]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#edf2ea]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#0b1020]/60"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#0b1020]/70"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#0b1020]/80"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#07111f]/85"],
+.admin-dashboard[data-theme="dark"] [class~="bg-black/20"],
+.admin-dashboard[data-theme="dark"] [class~="bg-black/30"],
+.admin-dashboard[data-theme="dark"] [class~="bg-black/40"] {
+  background-color: rgba(14, 14, 14, 0.96) !important;
+  color: #f3f7ef !important;
+  border-color: #2a2a2a !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-[#7f9a65]"] {
+  background-color: #ffff00 !important;
+  color: #0b0b0b !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f4ecd3]"] {
+  background-color: rgba(255, 255, 0, 0.1) !important;
+  color: #ffff00 !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f7e2df]"] {
+  background-color: rgba(255, 44, 85, 0.12) !important;
+  color: #ffc8cf !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="text-[#132414]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#5e6c5a]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#80916f]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#90a085]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#5a6857]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#6f7d69]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#667261]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#899885]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#8f9a8b]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#97a491]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#a8b4a2]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#132414]"] {
+  color: #f3f7ef !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="text-[#5e6c5a]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#6f7d69]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#899885]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#8f9a8b]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#97a491]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#80916f]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#90a085]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#5a6857]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#667261]"] {
+  color: #d9d2bf !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="text-[#7f9a65]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#6f8859]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#92a284]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#80916f]"],
+.admin-dashboard[data-theme="dark"] [class~="text-[#90a085]"] {
+  color: #ffff00 !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="border-[#d7decf]"],
+.admin-dashboard[data-theme="dark"] [class~="border-[#dce5cf]"],
+.admin-dashboard[data-theme="dark"] [class~="border-[#e3e8dc]"],
+.admin-dashboard[data-theme="dark"] [class~="border-[#d9dfcf]"] {
+  border-color: #2a2a2a !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f7f9f3]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#f3f7ef]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#eef3e7]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#edf2ea]"] {
+  background-color: #111111 !important;
+}
+
+.admin-dashboard[data-theme="dark"] [class~="bg-[#e3ead8]"],
+.admin-dashboard[data-theme="dark"] [class~="bg-[#dce5cf]"] {
+  background-color: #151515 !important;
+}
+
+.admin-dashboard[data-theme="dark"] input:not([type="checkbox"]):not([type="radio"]),
+.admin-dashboard[data-theme="dark"] select,
+.admin-dashboard[data-theme="dark"] textarea {
+  background: #111111 !important;
+  color: #f3f7ef !important;
+  border-color: #2a2a2a !important;
+}
+
+.admin-dashboard[data-theme="dark"] input::placeholder,
+.admin-dashboard[data-theme="dark"] textarea::placeholder {
+  color: #7f8c7b !important;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .animate-fade-up,
   .animate-fade-in,

@@ -49,6 +49,24 @@ npm run db:seed
 npm run dev
 ```
 
+## Demo Email
+
+For local testing, use a mail catcher such as Mailpit or MailHog.
+
+Demo config:
+
+```env
+SMTP_HOST=127.0.0.1
+SMTP_PORT=1025
+SMTP_SECURE=false
+SMTP_USER=
+SMTP_PASSWORD=
+MAIL_FROM=Lemo Fest <demo@lemofest.co.za>
+```
+
+- Outgoing tickets and magic-link emails will be captured by the local inbox instead of being sent to a real mailbox.
+- If SMTP settings are left blank, the app still runs and logs the email payload to the console.
+
 ## Seed Accounts
 
 - `admin@lemofest.co.za`
@@ -74,4 +92,3 @@ npm run dev
 - Without payment credentials, the checkout page uses the demo confirmation route so the app still works locally.
 - The scanner route is protected to `ADMIN` and `STAFF` roles.
 - Facebook syncing falls back to the seeded demo posts when Graph API credentials are missing.
-

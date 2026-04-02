@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -143,21 +144,20 @@ export default async function AdminEventsPage({ searchParams }: PageProps) {
                     <p className="text-xs text-white/45">{formatDateTime(event.startsAt)}</p>
                   </div>
                   <div className="flex gap-2">
-                    <Link
+                  <Link
                       href={`/admin/events?edit=${event.id}`}
                       className="rounded-full border border-white/10 bg-white/6 px-3 py-2 text-xs text-white/70 transition hover:bg-white/12"
                     >
                       Edit
                     </Link>
-                    <form action={deleteEventAction}>
-                      <input type="hidden" name="id" value={event.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-[#ff6b4a]/30 bg-[#ff6b4a]/10 px-3 py-2 text-xs text-[#ffd7cf]"
-                      >
-                        Delete
-                      </button>
-                    </form>
+                    <ConfirmActionDialog
+                      triggerLabel="Delete"
+                      title="Delete this event?"
+                      description={`This will remove ${event.title} from the admin catalog. You can re-create it later if needed.`}
+                      confirmLabel="Delete event"
+                      action={deleteEventAction}
+                      fields={{ id: event.id }}
+                    />
                   </div>
                 </div>
               </div>

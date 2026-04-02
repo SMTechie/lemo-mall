@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -102,15 +103,14 @@ export default async function AdminTestimonialsPage({ searchParams }: PageProps)
                     >
                       Edit
                     </Link>
-                    <form action={deleteTestimonialAction}>
-                      <input type="hidden" name="id" value={testimonial.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-[#ff6b4a]/30 bg-[#ff6b4a]/10 px-3 py-2 text-xs text-[#ffd7cf]"
-                      >
-                        Delete
-                      </button>
-                    </form>
+                    <ConfirmActionDialog
+                      triggerLabel="Delete"
+                      title="Delete this testimonial?"
+                      description={`This will remove the quote from the homepage carousel and testimonial blocks.`}
+                      confirmLabel="Delete testimonial"
+                      action={deleteTestimonialAction}
+                      fields={{ id: testimonial.id }}
+                    />
                   </div>
                 </div>
                 <p className="mt-3 text-sm leading-7 text-white/70">{testimonial.quote}</p>
@@ -122,4 +122,3 @@ export default async function AdminTestimonialsPage({ searchParams }: PageProps)
     </div>
   );
 }
-

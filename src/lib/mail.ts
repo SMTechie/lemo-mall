@@ -13,21 +13,35 @@ let cachedTransport: Transporter | null = null;
 function createTransport() {
   const host = process.env.SMTP_HOST;
   const port = Number(process.env.SMTP_PORT ?? 587);
+  const secure = process.env.SMTP_SECURE
+    ? process.env.SMTP_SECURE === "true"
+    : port === 465;
   const user = process.env.SMTP_USER;
   const pass = process.env.SMTP_PASSWORD;
 
   if (!host || !user || !pass) {
-    return null;
+    if (!host) {
+      return null;
+    }
+
+    return nodemailer.createTransport({
+      host,
+      port,
+      secure,
+    });
   }
 
   return nodemailer.createTransport({
     host,
     port,
-    secure: port === 465,
-    auth: {
-      user,
-      pass,
-    },
+    secure,
+    auth:
+      user && pass
+        ? {
+            user,
+            pass,
+          }
+        : undefined,
   });
 }
 
@@ -142,4 +156,3 @@ export async function sendTicketEmail(input: {
     text,
   });
 }
-

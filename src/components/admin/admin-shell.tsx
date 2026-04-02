@@ -1,132 +1,170 @@
-import { auth } from "@/auth";
-import { Container } from "@/components/ui/container";
+import Image from "next/image";
 import Link from "next/link";
-import {
-  BarChart3,
-  CalendarDays,
-  GalleryVerticalEnd,
-  Mail,
-  Package,
-  ShieldCheck,
-  Sparkles,
-  Tickets,
-  Users,
-  Newspaper,
-} from "lucide-react";
+import { auth } from "@/auth";
+import { AdminThemeToggle } from "@/components/admin/admin-theme-toggle";
+import { AdminSidebar, type AdminNavItem } from "@/components/admin/admin-sidebar";
+import type { ReactNode } from "react";
+import { Bell, Search } from "lucide-react";
+import { cookies } from "next/headers";
 
-const navItems = [
-  { href: "/admin", label: "Overview", icon: BarChart3 },
-  { href: "/admin/events", label: "Events", icon: CalendarDays },
-  { href: "/admin/tickets", label: "Tickets", icon: Tickets },
-  { href: "/admin/orders", label: "Orders", icon: Sparkles },
-  { href: "/admin/products", label: "Products", icon: Package },
-  { href: "/admin/gallery", label: "Gallery", icon: GalleryVerticalEnd },
-  { href: "/admin/testimonials", label: "Testimonials", icon: Users },
-  { href: "/admin/enquiries", label: "Enquiries", icon: Mail },
-  { href: "/admin/social", label: "Social", icon: Newspaper },
-  { href: "/verify", label: "Scanner", icon: ShieldCheck },
+const navItems: AdminNavItem[] = [
+  { href: "/admin", label: "Dashboard", iconKey: "dashboard" },
+  { href: "/admin/events", label: "Events", iconKey: "events" },
+  { href: "/admin/products", label: "Shop", iconKey: "shop" },
+  { href: "/admin/customers", label: "Customers", iconKey: "customers" },
+  { href: "/admin/orders", label: "Orders", iconKey: "orders" },
+  { href: "/admin/tickets", label: "Tickets", iconKey: "tickets" },
+  { href: "/admin/enquiries", label: "Messages", iconKey: "messages" },
+  { href: "/admin/verification", label: "Verification", iconKey: "verification" },
+  { href: "/admin/settings", label: "Settings", iconKey: "settings" },
 ];
 
-const footerLinks = [
-  { href: "/admin", label: "Overview" },
-  { href: "/admin/orders", label: "Orders" },
-  { href: "/admin/products", label: "Products" },
-  { href: "/admin/enquiries", label: "Enquiries" },
-  { href: "/verify", label: "Scanner" },
-  { href: "/contact", label: "Public contact" },
-];
+function getInitials(name?: string | null) {
+  if (!name) return "LF";
+
+  return name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase() ?? "")
+    .join("");
+}
 
 export async function AdminShell({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   const session = await auth();
+  const cookieStore = await cookies();
+  const theme = cookieStore.get("lemo-admin-theme-v2")?.value === "light" ? "light" : "dark";
+  const initials = getInitials(session?.user?.name);
 
   return (
-    <div className="min-h-screen bg-[#050913]">
-      <div className="border-b border-white/10 bg-[#07111f]/85 backdrop-blur-xl">
-        <Container className="flex min-h-20 items-center justify-between gap-6 py-4">
-          <div>
-            <p className="text-sm uppercase tracking-[0.28em] text-[#ffcc66]">Admin dashboard</p>
-            <h1 className="mt-1 text-xl font-semibold text-[#f8f4e8]">Lemo Fest Control Room</h1>
-          </div>
-          <div className="text-right text-sm text-white/60">
-            <p>{session?.user?.name ?? "Staff user"}</p>
-            <p className="text-xs uppercase tracking-[0.22em] text-[#91e4ff]">
-              {session?.user?.role ?? "STAFF"}
-            </p>
-          </div>
-        </Container>
-      </div>
-
-      <Container className="grid gap-8 py-8 lg:grid-cols-[280px_1fr]">
-        <aside className="rounded-[28px] border border-white/10 bg-white/6 p-4 backdrop-blur">
-          <nav className="space-y-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className="flex items-center gap-3 rounded-2xl px-4 py-3 text-sm text-white/70 transition hover:bg-white/8 hover:text-[#f8f4e8]"
+    <div
+      className={`admin-dashboard min-h-screen ${
+        theme === "dark" ? "bg-[#0b0b0b] text-[#f8f4e8]" : "bg-[#f6f8f2] text-[#132414]"
+      }`}
+      data-theme={theme}
+    >
+      <div
+        className={`pointer-events-none fixed inset-0 ${
+          theme === "dark"
+            ? "bg-[radial-gradient(circle_at_top,rgba(255,44,85,0.16),transparent_30%),radial-gradient(circle_at_20%_20%,rgba(255,255,0,0.1),transparent_24%),radial-gradient(circle_at_bottom_right,rgba(255,44,85,0.08),transparent_24%)]"
+            : "bg-[radial-gradient(circle_at_top_right,rgba(127,154,101,0.14),transparent_36%),radial-gradient(circle_at_bottom_left,rgba(166,180,134,0.12),transparent_32%)]"
+        }`}
+      />
+      <div className="relative z-10">
+        <header
+          className={`sticky top-0 z-30 border-b backdrop-blur-xl ${
+            theme === "dark"
+              ? "border-white/10 bg-[#0b0b0b]/86"
+              : "border-[#d9dfcf] bg-white/82"
+          }`}
+        >
+          <div className="flex h-20 w-full items-center gap-4 px-4 sm:px-6 lg:px-8">
+            <Link href="/admin" className="flex items-center gap-3">
+              <Image
+                src="/lemofest/dugem-logos.png"
+                alt="Lemo Fest"
+                width={156}
+                height={52}
+                className="h-10 w-auto object-contain"
+                priority
+              />
+              <div className="hidden border-l border-[#d9dfcf] pl-3 sm:block">
+                <p
+                  className={`text-[11px] uppercase tracking-[0.24em] ${
+                    theme === "dark" ? "text-[#ffff00]" : "text-[#80916f]"
+                  }`}
                 >
-                  <Icon className="h-4 w-4 text-[#ffcc66]" />
-                  {item.label}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
-
-        <main className="space-y-8">{children}</main>
-      </Container>
-
-      <Container className="pb-10">
-        <footer className="rounded-[28px] border border-white/10 bg-white/6 p-6 backdrop-blur">
-          <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr_0.9fr]">
-            <div className="space-y-3">
-              <p className="text-sm uppercase tracking-[0.28em] text-[#ffcc66]">Maintenance</p>
-              <h2 className="text-lg font-semibold text-[#f8f4e8]">
-                Keep sales, support, and stock under control.
-              </h2>
-              <p className="max-w-xl text-sm leading-7 text-white/60">
-                This dashboard is where the team manages ticket sales, merch inventory, enquiries,
-                and the QR scanner used at the gate.
-              </p>
-            </div>
-
-            <div>
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#ffcc66]">
-                Quick links
-              </h3>
-              <div className="space-y-3 text-sm text-white/65">
-                {footerLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="block transition hover:text-white">
-                    {link.label}
-                  </Link>
-                ))}
+                  Admin
+                </p>
+                <p className={`text-sm font-semibold ${theme === "dark" ? "text-[#f8f4e8]" : "text-[#132414]"}`}>
+                  Lemo Fest operations hub
+                </p>
               </div>
+            </Link>
+
+            <div className="hidden flex-1 items-center justify-center md:flex">
+              <label
+                className={`flex w-full max-w-xl items-center gap-3 rounded-full border px-4 py-3 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.4)] ${
+                  theme === "dark"
+                    ? "border-white/10 bg-[#111111] text-[#d9d2bf]"
+                    : "border-[#d9dfcf] bg-[#f7f9f3] text-[#708166]"
+                }`}
+              >
+                <Search className="h-4 w-4 shrink-0" />
+                <input
+                  type="search"
+                  placeholder="Search events, orders, customers, messages..."
+                  className={`w-full bg-transparent text-sm outline-none ${
+                    theme === "dark"
+                      ? "text-[#f8f4e8] placeholder:text-[#8f8f8f]"
+                      : "text-[#132414] placeholder:text-[#8f9a8b]"
+                  }`}
+                />
+              </label>
             </div>
 
-            <div>
-              <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#ffcc66]">
-                Support
-              </h3>
-              <div className="space-y-3 text-sm text-white/65">
-                <p>hello@lemofest.co.za</p>
-                <p>Lemo Green Park, Johannesburg</p>
-                <p>Mon to Fri, 09:00 to 17:00</p>
+            <div className="ml-auto flex items-center gap-3">
+              <AdminThemeToggle initialTheme={theme} />
+              <button
+                type="button"
+                className={`hidden h-11 items-center gap-2 rounded-full border px-4 text-sm font-medium shadow-[0_12px_28px_rgba(15,35,18,0.05)] transition md:inline-flex ${
+                  theme === "dark"
+                    ? "border-white/10 bg-[#111111] text-[#f8f4e8] hover:bg-[#1a1a1a]"
+                    : "border-[#d9dfcf] bg-white text-[#132414] hover:bg-[#f3f7ef]"
+                }`}
+              >
+                <Bell className={`h-4 w-4 ${theme === "dark" ? "text-[#ffff00]" : "text-[#7f9a65]"}`} />
+                Alerts
+              </button>
+              <div
+                className={`flex items-center gap-3 rounded-full border px-3 py-2 shadow-[0_12px_28px_rgba(15,35,18,0.05)] ${
+                  theme === "dark"
+                    ? "border-white/10 bg-[#111111]"
+                    : "border-[#d9dfcf] bg-white"
+                }`}
+              >
+                <div
+                  className={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-semibold ${
+                    theme === "dark"
+                      ? "bg-[#1a1a1a] text-[#f8f4e8]"
+                      : "bg-[#dce5cf] text-[#132414]"
+                  }`}
+                >
+                  {initials}
+                </div>
+                <div className="hidden text-right sm:block">
+                  <p
+                    className={`text-sm font-semibold ${
+                      theme === "dark" ? "text-[#f8f4e8]" : "text-[#132414]"
+                    }`}
+                  >
+                    {session?.user?.name ?? "Staff user"}
+                  </p>
+                  <p
+                    className={`text-[11px] uppercase tracking-[0.22em] ${
+                      theme === "dark" ? "text-[#d9d2bf]" : "text-[#80916f]"
+                    }`}
+                  >
+                    {session?.user?.role ?? "STAFF"}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
+        </header>
 
-          <div className="mt-6 flex flex-col gap-3 border-t border-white/10 pt-4 text-sm text-white/45 sm:flex-row sm:items-center sm:justify-between">
-            <p>Need help with maintenance or stock updates? Start with Enquiries.</p>
-            <p>Kenworth Group Copyright 2026, All rights reserved.</p>
+        <div className="grid items-start gap-6 px-4 py-6 sm:px-6 lg:grid-cols-[280px_minmax(0,1fr)] lg:px-8">
+          <div className="lg:sticky lg:top-24 lg:h-[calc(100vh-7rem)] lg:self-start lg:overflow-y-auto">
+            <AdminSidebar navItems={navItems} />
           </div>
-        </footer>
-      </Container>
+
+          <main className="min-w-0 space-y-6 pb-8">{children}</main>
+        </div>
+      </div>
     </div>
   );
 }

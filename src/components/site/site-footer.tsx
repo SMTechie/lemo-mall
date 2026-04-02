@@ -18,8 +18,12 @@ const socialLinks = [
 
 export function SiteFooter() {
   return (
-    <footer id="contact" className="mt-24 border-t border-white/10 bg-[#0b0b0b]">
-      <Container className="grid gap-10 py-12 lg:grid-cols-[1.25fr_0.7fr_0.7fr]">
+    <footer
+      id="contact"
+      className="relative mt-24 overflow-hidden border-t border-white/10 bg-[#050505]/84 backdrop-blur-xl"
+    >
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,204,102,0.08),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(255,44,85,0.08),transparent_40%)]" />
+      <Container className="relative z-10 grid gap-10 py-12 lg:grid-cols-[1.25fr_0.7fr_0.7fr]">
         <div className="space-y-4">
           <Image
             src="/lemofest/dugem-logos.png"
@@ -69,7 +73,7 @@ export function SiteFooter() {
           </div>
         </div>
       </Container>
-      <Container className="pb-10">
+      <Container className="relative z-10 pb-10">
         <p className="border-t border-white/10 pt-6 text-sm text-white/45">
           Kenworth Group Copyright 2026, All rights reserved.
         </p>

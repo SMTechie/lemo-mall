@@ -12,13 +12,20 @@ const csvToArray = z
       : [],
   );
 
-const nullableString = z
-  .string()
-  .optional()
-  .transform((value) => {
-    const trimmed = value?.trim();
-    return trimmed ? trimmed : null;
-  });
+const formText = z.preprocess((value) => {
+  if (value === null || value === undefined) {
+    return undefined;
+  }
+
+  if (typeof value !== "string") {
+    return value;
+  }
+
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}, z.string().optional());
+
+const nullableString = formText.transform((value) => value ?? null);
 
 const enquiryTypeSchema = z.enum([
   "GENERAL",
@@ -52,6 +59,37 @@ export const checkoutSchema = z.object({
   shippingPostalCode: nullableString,
   shippingCountry: nullableString,
   items: z.array(ticketCartItemSchema).min(1, "Cart is empty"),
+}).superRefine((data, ctx) => {
+  const hasMerchandise = data.items.some((item) => item.kind === "PRODUCT");
+
+  if (!hasMerchandise) {
+    return;
+  }
+
+  const requiredFields: Array<keyof Pick<
+    typeof data,
+    | "shippingAddressLine1"
+    | "shippingCity"
+    | "shippingRegion"
+    | "shippingPostalCode"
+    | "shippingCountry"
+  >> = [
+    "shippingAddressLine1",
+    "shippingCity",
+    "shippingRegion",
+    "shippingPostalCode",
+    "shippingCountry",
+  ];
+
+  for (const field of requiredFields) {
+    if (!data[field]) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: [field],
+        message: "Shipping details are required when your cart includes merch.",
+      });
+    }
+  }
 });
 
 export const ticketVerificationSchema = z.object({

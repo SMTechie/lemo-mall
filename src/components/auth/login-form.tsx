@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { signIn } from "next-auth/react";
-import { Chrome, Mail } from "lucide-react";
+import { Chrome, Lock, Mail, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -13,6 +13,10 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
 
   const canUseGoogle = useMemo(
     () => Boolean(process.env.NEXT_PUBLIC_GOOGLE_LOGIN === "true"),
+    [],
+  );
+  const canUseDemoAccess = useMemo(
+    () => Boolean(process.env.NEXT_PUBLIC_DEMO_LOGIN === "true"),
     [],
   );
 
@@ -39,10 +43,10 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
 
         setMessage("Magic link sent. Check your inbox.");
       }}
-    >
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-white/70" htmlFor="email">
-          Email address
+      >
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-white/70" htmlFor="email">
+            Email address
         </label>
         <Input
           id="email"
@@ -66,6 +70,27 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
         {isSubmitting ? "Sending..." : "Send magic link"}
       </Button>
 
+      {canUseDemoAccess ? (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <button
+            type="button"
+            onClick={() => signIn("demo-access", { email: "admin@lemofest.co.za", callbackUrl })}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#ffff00] px-5 text-sm font-semibold text-[#0b0b0b] shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition hover:brightness-95"
+          >
+            <ShieldCheck className="h-4 w-4" />
+            Demo admin
+          </button>
+          <button
+            type="button"
+            onClick={() => signIn("demo-access", { email: "staff@lemofest.co.za", callbackUrl })}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-full bg-[#ffff00] px-5 text-sm font-semibold text-[#0b0b0b] shadow-[0_12px_30px_rgba(0,0,0,0.22)] transition hover:brightness-95"
+          >
+            <Lock className="h-4 w-4" />
+            Demo staff
+          </button>
+        </div>
+      ) : null}
+
       {canUseGoogle ? (
         <button
           type="button"
@@ -79,4 +104,3 @@ export function LoginForm({ callbackUrl }: { callbackUrl: string }) {
     </form>
   );
 }
-

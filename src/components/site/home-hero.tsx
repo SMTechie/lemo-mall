@@ -4,19 +4,8 @@ import { Container } from "@/components/ui/container";
 export function HomeHero() {
   return (
     <section className="relative isolate min-h-[100svh] overflow-hidden animate-fade-in motion-reduce:animate-none">
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster="/lemofest/blog11.jpg"
-        className="fixed inset-0 -z-20 h-full w-full object-cover object-center"
-      >
-        <source src="/lemofest/2025_HIGHLIGHTS.mp4" type="video/mp4" />
-      </video>
-
-      <div className="fixed inset-0 -z-10 bg-[linear-gradient(90deg,rgba(41,27,30,0.94)_0%,rgba(41,27,30,0.86)_34%,rgba(41,27,30,0.54)_62%,rgba(41,27,30,0.18)_100%)]" />
-      <div className="fixed inset-0 -z-10 bg-[radial-gradient(circle_at_78%_18%,rgba(112,14,58,0.48),transparent_34%),radial-gradient(circle_at_26%_30%,rgba(0,0,0,0.18),transparent_40%)]" />
+      <div className="absolute inset-0 -z-10 bg-[linear-gradient(90deg,rgba(11,11,11,0.84)_0%,rgba(11,11,11,0.68)_38%,rgba(11,11,11,0.18)_100%)]" />
+      <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_72%_16%,rgba(255,44,85,0.28),transparent_32%),radial-gradient(circle_at_22%_28%,rgba(255,255,0,0.1),transparent_30%)]" />
 
       <Container className="relative flex min-h-[100svh] items-center py-24 sm:py-28 lg:py-32">
         <div className="max-w-2xl animate-fade-up motion-reduce:animate-none">

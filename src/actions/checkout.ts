@@ -4,10 +4,16 @@ import { auth } from "@/auth";
 import { createCheckoutOrder } from "@/lib/orders";
 import { checkoutSchema } from "@/lib/validators";
 import { redirect } from "next/navigation";
+import { ZodError } from "zod";
 
 type CheckoutActionState = {
   error?: string;
 };
+
+function formText(formData: FormData, name: string) {
+  const value = formData.get(name);
+  return typeof value === "string" ? value : undefined;
+}
 
 export async function submitCheckout(
   _state: CheckoutActionState,
@@ -18,17 +24,17 @@ export async function submitCheckout(
     const items = typeof rawItems === "string" ? JSON.parse(rawItems) : [];
 
     const parsed = checkoutSchema.parse({
-      customerName: formData.get("customerName"),
-      customerEmail: formData.get("customerEmail"),
-      customerPhone: formData.get("customerPhone"),
-      notes: formData.get("notes"),
-      discountCode: formData.get("discountCode"),
-      shippingAddressLine1: formData.get("shippingAddressLine1"),
-      shippingAddressLine2: formData.get("shippingAddressLine2"),
-      shippingCity: formData.get("shippingCity"),
-      shippingRegion: formData.get("shippingRegion"),
-      shippingPostalCode: formData.get("shippingPostalCode"),
-      shippingCountry: formData.get("shippingCountry"),
+      customerName: formText(formData, "customerName"),
+      customerEmail: formText(formData, "customerEmail"),
+      customerPhone: formText(formData, "customerPhone"),
+      notes: formText(formData, "notes"),
+      discountCode: formText(formData, "discountCode"),
+      shippingAddressLine1: formText(formData, "shippingAddressLine1"),
+      shippingAddressLine2: formText(formData, "shippingAddressLine2"),
+      shippingCity: formText(formData, "shippingCity"),
+      shippingRegion: formText(formData, "shippingRegion"),
+      shippingPostalCode: formText(formData, "shippingPostalCode"),
+      shippingCountry: formText(formData, "shippingCountry"),
       items,
     });
 
@@ -46,6 +52,22 @@ export async function submitCheckout(
     );
     return {};
   } catch (error) {
+    if (error instanceof ZodError) {
+      const shippingIssue = error.issues.find((issue) =>
+        issue.path.some(
+          (part) =>
+            typeof part === "string" && part.toLowerCase().startsWith("shipping"),
+        ),
+      );
+
+      return {
+        error:
+          shippingIssue?.message ??
+          error.issues[0]?.message ??
+          "Please check the checkout form and try again",
+      };
+    }
+
     return {
       error: error instanceof Error ? error.message : "Unable to start checkout",
     };

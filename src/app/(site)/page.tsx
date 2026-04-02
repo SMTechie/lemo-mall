@@ -112,7 +112,7 @@ export default async function HomePage() {
     <div className="pb-20">
       <HomeHero />
 
-      <div className="relative z-10 bg-[#0b0b0b] pb-20">
+      <div className="relative z-10 pb-20">
         <section className="pt-16">
           <Container>
             <SectionHeading

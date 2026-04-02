@@ -27,11 +27,11 @@ export function SectionHeading({
       <div className="max-w-2xl space-y-4">
         {eyebrow ? <Badge>{eyebrow}</Badge> : null}
         <div className="space-y-3">
-          <h2 className="text-3xl font-semibold tracking-tight text-[#f8f4e8] sm:text-4xl">
+          <h2 className="text-3xl font-semibold tracking-tight text-[#132414] sm:text-4xl">
             {title}
           </h2>
           {description ? (
-            <p className="text-sm leading-7 text-white/70 sm:text-base">{description}</p>
+            <p className="text-sm leading-7 text-[#5e6c5a] sm:text-base">{description}</p>
           ) : null}
         </div>
       </div>

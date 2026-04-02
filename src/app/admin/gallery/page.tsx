@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -114,15 +115,14 @@ export default async function AdminGalleryPage({ searchParams }: PageProps) {
                     >
                       Edit
                     </Link>
-                    <form action={deleteGalleryAction}>
-                      <input type="hidden" name="id" value={image.id} />
-                      <button
-                        type="submit"
-                        className="rounded-full border border-[#ff6b4a]/30 bg-[#ff6b4a]/10 px-3 py-2 text-xs text-[#ffd7cf]"
-                      >
-                        Delete
-                      </button>
-                    </form>
+                    <ConfirmActionDialog
+                      triggerLabel="Delete"
+                      title="Delete this gallery image?"
+                      description={`This will remove ${image.title} from the public gallery.`}
+                      confirmLabel="Delete image"
+                      action={deleteGalleryAction}
+                      fields={{ id: image.id }}
+                    />
                   </div>
                 </div>
               </div>
@@ -133,4 +133,3 @@ export default async function AdminGalleryPage({ searchParams }: PageProps) {
     </div>
   );
 }
-

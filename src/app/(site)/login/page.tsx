@@ -24,7 +24,7 @@ export default async function LoginPage({ searchParams }: PageProps) {
           </h1>
           <p className="mt-3 text-sm leading-7 text-white/70">
             Use a magic link for email access. Admin and staff accounts unlock the dashboard and
-            scanner.
+            scanner. Demo access buttons appear in local development for the seeded accounts.
           </p>
           <div className="mt-8">
             <LoginForm callbackUrl={callbackUrl ?? "/admin"} />
@@ -40,4 +40,3 @@ export default async function LoginPage({ searchParams }: PageProps) {
     </div>
   );
 }
-
