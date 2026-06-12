@@ -24,7 +24,7 @@ export default async function EventsPage() {
           <h1 className="mt-2 text-4xl font-bold tracking-normal">Book Lemo Fest experiences</h1>
           <p className="mt-3 text-muted-foreground">Browse upcoming events and secure scan-ready QR tickets.</p>
         </div>
-        <Button asChild variant="outline"><Link href="/programme">View programme</Link></Button>
+        <Button asChild variant="outline"><Link href="/#programme">View programme</Link></Button>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
         {events.map((event) => {

@@ -30,7 +30,7 @@ export function SiteShell({
   }
 
   const primaryLinks = [
-    { href: "/programme", label: "Home" },
+    { href: "/", label: "Home" },
     { href: "/lineup", label: "Line-up" },
     { href: "/shop", label: "Merch" },
     { href: "/highlights", label: "Highlights" },

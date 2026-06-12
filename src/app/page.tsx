@@ -47,7 +47,7 @@ export default async function HomePage() {
                 <Link href="/events">Buy tickets <ArrowRight className="h-4 w-4" /></Link>
               </Button>
               <Button asChild variant="secondary" size="lg">
-                <Link href="/programme">View programme</Link>
+                <Link href="#programme">View programme</Link>
               </Button>
               <Button asChild variant="outline" size="lg" className="border-white/30 bg-white/10 text-white hover:bg-white/20">
                 <a href={whatsappUrl()} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />WhatsApp support</a>
@@ -86,7 +86,7 @@ export default async function HomePage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
+      <section id="programme" className="scroll-mt-28 mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
         <div className="mb-6">
           <p className="text-sm font-semibold text-primary">Experience</p>
           <h2 className="mt-2 text-3xl font-bold tracking-normal">More than one kind of festival day</h2>
@@ -135,7 +135,7 @@ export default async function HomePage() {
             <p className="text-sm font-semibold text-primary">Upcoming events</p>
             <h2 className="mt-2 text-3xl font-bold tracking-normal">2026 Lemo Fest programme</h2>
           </div>
-          <Button asChild variant="outline"><Link href="/programme">Full programme</Link></Button>
+          <Button asChild variant="outline"><Link href="#programme">Full programme</Link></Button>
         </div>
         <div className="overflow-hidden rounded-lg border">
           {festivalProgramme.slice(0, 5).map((item) => (

@@ -5,7 +5,7 @@ import { whatsappUrl } from "@/lib/whatsapp";
 import { Button } from "@/components/ui/button";
 
 const festivalLinks = [
-  ["Home", "/programme"],
+  ["Home", "/"],
   ["Line-up", "/lineup"],
   ["Tickets", "/events"],
   ["Merch", "/shop"],
