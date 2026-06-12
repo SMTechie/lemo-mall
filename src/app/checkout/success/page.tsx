@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { CheckCircle2, TicketCheck } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { syncPaidOrderFromStripe } from "@/services/orders";
+import { syncPaidOrderFromYoco } from "@/services/orders";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 
@@ -13,7 +13,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
 
   if (orderId) {
     try {
-      await syncPaidOrderFromStripe(orderId);
+      await syncPaidOrderFromYoco(orderId);
     } catch {
       syncFailed = true;
     }
@@ -38,7 +38,7 @@ export default async function CheckoutSuccessPage({ searchParams }: { searchPara
 
           {syncFailed ? (
             <p className="mt-4 rounded-md border border-accent/30 bg-accent/10 p-3 text-sm text-accent-foreground">
-              Stripe has not confirmed this order on this page yet. Your tickets will appear once the webhook finishes processing.
+              Yoco has not confirmed this order on this page yet. Your tickets will appear once the payment confirmation finishes processing.
             </p>
           ) : null}
 

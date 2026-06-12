@@ -343,8 +343,10 @@ model Order {
   totalCents            Int
   amountPaidCents       Int         @default(0)
   balanceDueCents       Int         @default(0)
-  stripeCheckoutId      String?     @unique
-  stripePaymentIntentId String?     @unique
+  yocoCheckoutId         String?     @unique
+  yocoPaymentId          String?     @unique
+  legacyCheckoutId       String?     @unique @map("stripeCheckoutId")
+  legacyPaymentIntentId  String?     @unique @map("stripePaymentIntentId")
   customerName          String
   customerEmail         String
   userId                String?
@@ -472,7 +474,8 @@ model PaymentInstallment {
   amountCents           Int
   dueAt                 DateTime?
   status                InstallmentStatus @default(PENDING)
-  stripePaymentIntentId String?
+  paymentReferenceId    String?
+  legacyPaymentIntentId String?            @map("stripePaymentIntentId")
   paidAt                DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt

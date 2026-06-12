@@ -58,7 +58,7 @@ export default function ContactPage() {
           </Card>
           {[
             ["Main venue", MapPin, "Lemo Green Park hosts the core festival programme."],
-            ["Secure payments", ShieldCheck, "Stripe-powered checkout in ZAR with webhook confirmation."],
+            ["Secure payments", ShieldCheck, "Yoco-powered checkout in ZAR with payment confirmation."],
             ["Ticket support", TicketCheck, "QR tickets can be resent and verified by the admin scanner."]
           ].map(([title, Icon, copy]) => (
             <Card key={String(title)}>

@@ -12,7 +12,7 @@ export default async function CheckoutPage() {
         <Badge variant="secondary">Secure ZAR checkout</Badge>
         <h1 className="text-3xl font-bold tracking-normal">Checkout</h1>
         <p className="mt-2 text-muted-foreground">
-          Merch and tickets are processed in one secure Stripe payment. Tickets are delivered as QR codes after payment confirmation.
+          Merch and tickets are processed in one secure Yoco payment. Tickets are delivered as QR codes after payment confirmation.
         </p>
       </div>
       <CheckoutForm user={session?.user} />

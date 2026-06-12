@@ -107,7 +107,7 @@ export function CheckoutForm({ user }: { user?: { name?: string | null; email?: 
           </div>
           <Button className="w-full" disabled={pending || cart.items.length === 0}>
             <CreditCard className="h-4 w-4" />
-            Pay with Stripe
+            Pay with Yoco
           </Button>
         </CardContent>
       </Card>

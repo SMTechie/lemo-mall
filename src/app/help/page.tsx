@@ -7,8 +7,8 @@ import { whatsappUrl } from "@/lib/whatsapp";
 export const metadata = { title: "Help Centre" };
 
 const faqs = [
-  ["Where do I find my tickets?", "Paid ticket orders generate QR tickets under your account order history and by email when SMTP is configured."],
-  ["Can I buy merch and tickets together?", "Yes. The checkout supports mixed carts and confirms everything through a single Stripe payment."],
+  ["Where do I find my tickets?", "Paid ticket orders generate QR tickets under your account order history and by email when Resend is configured."],
+  ["Can I buy merch and tickets together?", "Yes. The checkout supports mixed carts and confirms everything through a single Yoco payment."],
   ["What happens if a ticket is scanned twice?", "The scanner marks valid tickets as used. A second scan is rejected with the current ticket status."],
   ["How do promo codes work?", "Enter an active promo code at checkout. Admins can manage limits, expiry dates and pause codes."]
 ];

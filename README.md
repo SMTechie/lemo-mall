@@ -1,6 +1,6 @@
 # Lemo Mall
 
-Production-oriented SaaS storefront for selling merchandise and event tickets with Next.js App Router, Auth.js, Prisma, Neon, Stripe, Cloudinary and QR ticket scanning.
+Production-oriented SaaS storefront for selling merchandise and event tickets with Next.js App Router, Auth.js, Prisma, Neon, Yoco, Resend and QR ticket scanning.
 
 ## Stack
 
@@ -8,8 +8,8 @@ Production-oriented SaaS storefront for selling merchandise and event tickets wi
 - Server Actions and Route Handlers only, optimized for Vercel serverless
 - Neon PostgreSQL with Prisma driver adapter and pooled `DATABASE_URL`
 - Auth.js credentials auth with bcrypt password hashing and admin/customer roles
-- Stripe Checkout in ZAR with signed webhook verification
-- Cloudinary signed upload helper
+- Yoco Checkout in ZAR with return-page and webhook payment confirmation
+- Neon-backed admin image uploads
 - QR ticket generation and browser-camera scanner
 - Recharts admin analytics and CSV export
 - WhatsApp support links, enquiry inbox, help centre and policy pages
@@ -48,41 +48,38 @@ Seeded users:
 npm run dev
 ```
 
-## Stripe Setup
+## Yoco Setup
 
-1. Create or open a Stripe account.
-2. Add `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to `.env`.
-3. For local webhook testing:
+1. Use the official Yoco test keys already shown in `.env.example`, or replace them with your own Yoco keys.
+2. The app creates hosted Yoco checkouts in ZAR and redirects customers to Yoco to pay.
+3. For card testing, Yoco documents `4111 1111 1111 1111` with any future expiry date and any 3-digit CVC.
+4. After deploying, register a Yoco webhook that points to:
 
-```bash
-stripe listen --forward-to localhost:3000/api/stripe/webhook
+```text
+https://your-domain.vercel.app/api/yoco/webhook
 ```
 
-4. Copy the generated `whsec_...` value to `STRIPE_WEBHOOK_SECRET`.
+The checkout success page also verifies the checkout status with Yoco, so local testing works even before a public webhook URL exists.
 
-Required webhook events:
+## Image Uploads
 
-- `checkout.session.completed`
-- `checkout.session.expired`
-- `checkout.session.async_payment_failed`
+Admin product and event images are uploaded through `/api/admin/images` and stored in Neon/PostgreSQL as `ImageAsset` records. No Cloudinary keys are required.
 
-The checkout uses ZAR line items. The Stripe Checkout Session creates the underlying PaymentIntent, and the webhook stores `stripePaymentIntentId` when payment completes.
+## Resend Email Setup
 
-## Cloudinary Setup
-
-1. Create a Cloudinary account.
-2. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` and `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
-3. Admin-only signed upload credentials are available at `/api/cloudinary/sign` for integrating an upload widget or custom uploader.
+1. Add `RESEND_API_KEY` to `.env` and Vercel Project Settings.
+2. Use `RESEND_FROM="Lemo Mall <onboarding@resend.dev>"` for Resend's default sender, or replace it after verifying a custom domain.
+3. Order confirmations and password reset emails are sent through Resend.
 
 ## Vercel Deployment
 
 1. Import the GitHub repo into Vercel.
 2. Add all variables from `.env.example` in Vercel Project Settings.
 3. Use the Neon pooled connection string for `DATABASE_URL`.
-4. Set Stripe webhook endpoint to:
+4. Register the Yoco webhook endpoint:
 
 ```text
-https://your-domain.vercel.app/api/stripe/webhook
+https://your-domain.vercel.app/api/yoco/webhook
 ```
 
 5. Run `npm run db:push` against production from a trusted machine or CI step.
@@ -102,7 +99,7 @@ https://your-domain.vercel.app/api/stripe/webhook
 - `/admin/discounts` promo-code management
 - `/admin/support` customer support inbox
 - `/admin/scanner` browser-camera QR check-in scanner
-- `/api/stripe/webhook` signed Stripe webhook
+- `/api/yoco/webhook` Yoco payment confirmation webhook
 
 ## WhatsApp Support
 
@@ -119,7 +116,6 @@ The storefront uses this for the floating WhatsApp button, footer, contact page 
 - Passwords are hashed with bcrypt.
 - Admin routes are protected by JWT role checks in middleware.
 - Server writes validate input with Zod.
-- Stripe webhook signatures are mandatory.
-- Product stock and ticket capacity are reserved atomically before Stripe redirect to prevent overselling.
-- Pending inventory is released on Stripe expiration or async payment failure.
+- Product stock and ticket capacity are reserved atomically before Yoco redirect to prevent overselling.
+- Yoco payment webhooks re-check the checkout status server-side before creating tickets.
 - Scanner API includes basic in-memory rate limiting suitable for serverless burst protection.

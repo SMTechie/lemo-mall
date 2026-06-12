@@ -3,8 +3,8 @@
 import { Prisma } from "@prisma/client";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { stripe } from "@/lib/stripe";
-import { absoluteUrl, orderNumber } from "@/lib/utils";
+import { createYocoCheckout } from "@/lib/yoco";
+import { orderNumber } from "@/lib/utils";
 import { checkoutSchema } from "@/lib/validators";
 import { platformFee } from "@/services/pricing";
 
@@ -105,7 +105,8 @@ export async function createCheckoutAction(_: CheckoutState, formData: FormData)
       const ticketQuantity = items.filter((item) => item.kind === "ticket").reduce((sum, item) => sum + item.quantity, 0);
       const platformFeeCents = platformFee(subtotalCents, tenant?.platformFeeBps, tenant?.fixedTicketFeeCents, ticketQuantity);
       const totalCents = Math.max(0, subtotalCents - discountCents + platformFeeCents);
-      const amountDueNowCents = paymentMode === "DEPOSIT" ? Math.max(100, Math.ceil(totalCents * 0.5)) : totalCents;
+      if (totalCents < 200) throw new Error("Yoco payments must be at least R2.00.");
+      const amountDueNowCents = paymentMode === "DEPOSIT" ? Math.max(200, Math.ceil(totalCents * 0.5)) : Math.max(200, totalCents);
       const balanceDueCents = totalCents - amountDueNowCents;
 
       const order = await tx.order.create({
@@ -136,32 +137,19 @@ export async function createCheckoutAction(_: CheckoutState, formData: FormData)
         include: { items: true }
       });
 
-      const stripeSession = await stripe.checkout.sessions.create({
-        mode: "payment",
-        customer_email: customerEmail,
-        currency: "zar",
-        line_items: [
-          {
-            quantity: 1,
-          price_data: {
-            currency: "zar",
-              unit_amount: amountDueNowCents,
-              product_data: { name: paymentMode === "DEPOSIT" ? `Deposit for ${order.orderNumber}` : `Order ${order.orderNumber}` }
-          }
-          }
-        ],
-        discounts: [],
-        success_url: absoluteUrl(`/checkout/success?order=${order.id}`),
-        cancel_url: absoluteUrl("/checkout?cancelled=1"),
-        metadata: { orderId: order.id, paymentMode }
+      const yocoCheckout = await createYocoCheckout({
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        amountCents: amountDueNowCents,
+        description: paymentMode === "DEPOSIT" ? `Deposit for ${order.orderNumber}` : `Order ${order.orderNumber}`
       });
 
       await tx.order.update({
         where: { id: order.id },
-        data: { stripeCheckoutId: stripeSession.id }
+        data: { yocoCheckoutId: yocoCheckout.id }
       });
 
-      return { url: stripeSession.url };
+      return { url: yocoCheckout.redirectUrl };
     });
 
     return { url: result.url ?? undefined };
