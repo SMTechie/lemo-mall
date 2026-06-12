@@ -1,83 +1,91 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Container } from "@/components/ui/container";
+import { ArrowRight, CalendarDays, Mail, MapPin, MessageCircle, TicketCheck } from "lucide-react";
+import { whatsappUrl } from "@/lib/whatsapp";
+import { Button } from "@/components/ui/button";
 
-const footerLinks = [
-  { href: "/events", label: "Events" },
-  { href: "/gallery", label: "Gallery" },
-  { href: "/news", label: "News" },
-  { href: "/shop", label: "Shop" },
-  { href: "/verify", label: "Verify" },
-  { href: "/contact", label: "Contact" },
+const festivalLinks = [
+  ["Home", "/programme"],
+  ["Line-up", "/lineup"],
+  ["Tickets", "/events"],
+  ["Merch", "/shop"],
+  ["Highlights", "/highlights"]
 ];
 
-const socialLinks = [
-  { href: "https://www.facebook.com/profile.php?id=100095293374770", label: "Facebook" },
-  { href: "https://www.instagram.com/lemo.fest/", label: "Instagram" },
+const supportLinks = [
+  ["Contact", "/contact"],
+  ["Help centre", "/help"],
+  ["Bar-card refunds", "/bar-card-refunds"],
+  ["Privacy", "/privacy"],
+  ["Terms", "/terms"],
+  ["Refunds", "/refunds"]
 ];
 
-export function SiteFooter() {
+const currentYear = 2026;
+
+export function SiteFooter({ hasSession = false }: { hasSession?: boolean }) {
   return (
-    <footer
-      id="contact"
-      className="relative mt-24 overflow-hidden border-t border-white/10 bg-[#050505]/84 backdrop-blur-xl"
-    >
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,204,102,0.08),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(255,44,85,0.08),transparent_40%)]" />
-      <Container className="relative z-10 grid gap-10 py-12 lg:grid-cols-[1.25fr_0.7fr_0.7fr]">
-        <div className="space-y-4">
-          <Image
-            src="/lemofest/dugem-logos.png"
-            alt="Lemo Fest"
-            width={220}
-            height={72}
-            className="h-12 w-auto object-contain"
-          />
-          <p className="max-w-xl text-sm leading-7 text-white/60">
-            Lemo Fest - Now or Never. A multi-page event platform for ticketing, merch,
-            gallery moments, newsletter-style updates, and QR verification.
-          </p>
-          <p className="text-sm font-medium text-[#ffff00]">hello@lemofest.co.za</p>
-        </div>
+    <footer className="border-t bg-foreground text-background">
+      <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="grid gap-8 lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr]">
+          <div>
+            <Link href="/" className="flex items-center gap-3">
+              <span className="relative h-14 w-14 overflow-hidden rounded-full border border-background/20 bg-background/10 p-1">
+                <Image src="/lemofest-logo.svg" alt="Lemo Fest" fill sizes="56px" className="object-cover" />
+              </span>
+              <span>
+                <span className="block text-lg font-black uppercase tracking-normal">Lemo Fest</span>
+                <span className="block text-xs font-medium text-background/60">Now or Never 2026</span>
+              </span>
+            </Link>
+            <p className="mt-5 max-w-md text-sm leading-6 text-background/70">
+              Official festival tickets, merch, visitor support and bar-card help for the Lemo Fest community.
+            </p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <Button asChild variant="secondary" size="sm">
+                <Link href="/events">Buy tickets <ArrowRight className="h-4 w-4" /></Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="border-background/25 bg-transparent text-background hover:bg-background/10">
+                <a href={whatsappUrl()} target="_blank" rel="noreferrer"><MessageCircle className="h-4 w-4" />WhatsApp</a>
+              </Button>
+            </div>
+          </div>
 
-        <div>
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#ffff00]">
-            Explore
-          </h3>
-          <div className="space-y-3 text-sm text-white/65">
-            {footerLinks.map((link) => (
-              <Link key={link.href} href={link.href} className="block transition hover:text-white">
-                {link.label}
-              </Link>
-            ))}
+          <div>
+            <p className="text-sm font-semibold text-background">Festival</p>
+            <div className="mt-4 grid gap-2 text-sm text-background/65">
+              {festivalLinks.map(([label, href]) => (
+                <Link key={href} href={href} className="transition-colors hover:text-background">{label}</Link>
+              ))}
+              {hasSession ? <Link href="/account/settings" className="transition-colors hover:text-background">Account settings</Link> : null}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-semibold text-background">Support</p>
+            <div className="mt-4 grid gap-2 text-sm text-background/65">
+              {supportLinks.map(([label, href]) => (
+                <Link key={href} href={href} className="transition-colors hover:text-background">{label}</Link>
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-lg border border-background/15 bg-background/5 p-5">
+            <p className="text-sm font-semibold text-background">Festival information</p>
+            <div className="mt-4 grid gap-3 text-sm text-background/70">
+              <p className="flex gap-2"><CalendarDays className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />Opening night starts 26 September 2026.</p>
+              <p className="flex gap-2"><MapPin className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />Main programme hosted at Lemo Green Park.</p>
+              <p className="flex gap-2"><TicketCheck className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />QR tickets are delivered after successful checkout.</p>
+              <p className="flex gap-2"><Mail className="mt-0.5 h-4 w-4 shrink-0 text-secondary" />Use Contact or WhatsApp for ticket and order support.</p>
+            </div>
           </div>
         </div>
 
-        <div>
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.24em] text-[#ffff00]">
-            Connect
-          </h3>
-          <div className="space-y-3 text-sm text-white/65">
-            {socialLinks.map((link) => (
-              <a
-                key={link.href}
-                href={link.href}
-                target="_blank"
-                rel="noreferrer"
-                className="block transition hover:text-white"
-              >
-                {link.label}
-              </a>
-            ))}
-            <p>Lemo Green Park</p>
-            <p>Johannesburg, South Africa</p>
-          </div>
+        <div className="mt-10 flex flex-col gap-3 border-t border-background/10 pt-5 text-xs text-background/55 sm:flex-row sm:items-center sm:justify-between">
+          <p>&copy; {currentYear} Lemo Fest. All rights reserved.</p>
+          <p>Secure checkout, QR ticketing and visitor support.</p>
         </div>
-      </Container>
-      <Container className="relative z-10 pb-10">
-        <p className="border-t border-white/10 pt-6 text-sm text-white/45">
-          Kenworth Group Copyright 2026, All rights reserved.
-        </p>
-      </Container>
+      </div>
     </footer>
   );
 }

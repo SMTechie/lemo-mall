@@ -1,22 +1,33 @@
-import { Role } from "@prisma/client";
-import { DefaultSession } from "next-auth";
+import "next-auth";
 
 declare module "next-auth" {
   interface Session {
-    user: DefaultSession["user"] & {
+    user: {
       id: string;
-      role: Role;
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+      role: "SUPER_ADMIN" | "TENANT_OWNER" | "ADMIN" | "MANAGER" | "EVENT_MANAGER" | "SCANNER_STAFF" | "SUPPORT_STAFF" | "CUSTOMER";
+      tenantId?: string | null;
+      roles: string[];
+      permissions: string[];
     };
   }
 
   interface User {
-    role: Role;
+    role: "SUPER_ADMIN" | "TENANT_OWNER" | "ADMIN" | "MANAGER" | "EVENT_MANAGER" | "SCANNER_STAFF" | "SUPPORT_STAFF" | "CUSTOMER";
+    tenantId?: string | null;
+    roles?: string[];
+    permissions?: string[];
   }
 }
 
 declare module "next-auth/jwt" {
   interface JWT {
-    role?: Role;
+    id?: string;
+    role?: "SUPER_ADMIN" | "TENANT_OWNER" | "ADMIN" | "MANAGER" | "EVENT_MANAGER" | "SCANNER_STAFF" | "SUPPORT_STAFF" | "CUSTOMER";
+    tenantId?: string | null;
+    roles?: string[];
+    permissions?: string[];
   }
 }
-

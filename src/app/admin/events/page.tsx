@@ -1,170 +1,145 @@
+import Image from "next/image";
 import Link from "next/link";
-import { ConfirmActionDialog } from "@/components/admin/confirm-action-dialog";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import { Plus, X } from "lucide-react";
+import { saveEventAction, deleteEventAction, duplicateEventAction } from "@/actions/admin";
+import { auth } from "@/auth";
+import { prisma } from "@/lib/prisma";
+import { formatMoney } from "@/lib/utils";
+import { AdminImageUpload } from "@/components/admin/admin-image-upload";
+import { AdminModal } from "@/components/admin/admin-modal";
 import { Button } from "@/components/ui/button";
-import { getAdminEvents } from "@/lib/site-data";
-import { deleteEventAction, upsertEventAction } from "@/actions/admin";
-import { formatDateTime } from "@/lib/utils";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
-type PageProps = {
-  searchParams: Promise<{ edit?: string; success?: string; deleted?: string }>;
-};
-
-function toLocalDateTime(value?: Date | string | null) {
-  if (!value) return "";
-  const date = value instanceof Date ? value : new Date(value);
-  return date.toISOString().slice(0, 16);
-}
-
-export const metadata = {
-  title: "Manage events",
-  description: "Create, edit, and delete Lemo Fest events.",
-};
-
-export default async function AdminEventsPage({ searchParams }: PageProps) {
-  const { edit } = await searchParams;
-  const events = await getAdminEvents();
-  const current = edit ? events.find((event) => event.id === edit) : null;
+export default async function AdminEventsPage({ searchParams }: { searchParams?: Promise<{ create?: string }> }) {
+  const params = await searchParams;
+  const session = await auth();
+  const canManageEvents = session?.user.permissions.includes("manage_events");
+  const showCreateForm = canManageEvents && params?.create === "1";
+  const events = await prisma.event.findMany({ include: { ticketTypes: true }, orderBy: { startsAt: "asc" } });
 
   return (
-    <div className="space-y-8">
-      <section className="rounded-[32px] border border-white/10 bg-white/6 p-8 backdrop-blur">
-        <p className="text-sm uppercase tracking-[0.28em] text-[#ffcc66]">Events</p>
-        <h1 className="mt-4 text-4xl font-semibold text-[#f8f4e8]">Manage line-ups and schedules</h1>
-        <p className="mt-3 text-sm leading-7 text-white/70">
-          Edit the public event catalog and keep the ticket storefront current.
-        </p>
-      </section>
-
-      <div className="grid gap-8 xl:grid-cols-[0.95fr_1.05fr]">
-        <form action={upsertEventAction} className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur">
-          <SectionHeading
-            eyebrow={current ? "Edit event" : "New event"}
-            title={current ? "Update the selected event" : "Create a new event"}
-            description="Use image URLs or upload a file to Cloudinary if credentials are configured."
-            className="mb-6"
-          />
-          <input type="hidden" name="id" defaultValue={current?.id ?? ""} />
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Input name="title" defaultValue={current?.title ?? ""} placeholder="Event title" required />
-            <Input name="slug" defaultValue={current?.slug ?? ""} placeholder="event-slug" required />
-            <Input name="location" defaultValue={current?.location ?? ""} placeholder="Location" required />
-            <Input name="venue" defaultValue={current?.venue ?? ""} placeholder="Venue" />
-            <Input name="address" defaultValue={current?.address ?? ""} placeholder="Address" className="sm:col-span-2" />
-            <Input
-              name="startsAt"
-              type="datetime-local"
-              defaultValue={toLocalDateTime(current?.startsAt)}
-              required
-            />
-            <Input
-              name="endsAt"
-              type="datetime-local"
-              defaultValue={toLocalDateTime(current?.endsAt)}
-            />
-            <Input
-              name="ticketPriceCents"
-              type="number"
-              min="0"
-              defaultValue={current?.ticketPriceCents ?? 0}
-              placeholder="Ticket price in cents"
-              required
-            />
-            <Input
-              name="capacity"
-              type="number"
-              min="1"
-              defaultValue={current?.capacity ?? ""}
-              placeholder="Capacity"
-            />
-            <Input
-              name="imageUrl"
-              defaultValue={current?.imageUrl ?? "/images/event-sunset.svg"}
-              placeholder="Image URL"
-              className="sm:col-span-2"
-            />
-            <Input
-              type="file"
-              name="imageFile"
-              accept="image/*"
-              className="sm:col-span-2"
-            />
-            <Input
-              name="galleryUrls"
-              defaultValue={current?.galleryUrls.join(", ") ?? ""}
-              placeholder="Gallery URLs separated by commas"
-              className="sm:col-span-2"
-            />
-            <Input
-              name="tags"
-              defaultValue={current?.tags.join(", ") ?? ""}
-              placeholder="Tags separated by commas"
-              className="sm:col-span-2"
-            />
-            <div className="flex items-center gap-3">
-              <input type="checkbox" name="featured" defaultChecked={current?.featured ?? false} />
-              <span className="text-sm text-white/70">Featured</span>
-            </div>
-            <div className="flex items-center gap-3">
-              <input type="checkbox" name="published" defaultChecked={current?.published ?? true} />
-              <span className="text-sm text-white/70">Published</span>
-            </div>
-          </div>
-          <Textarea
-            name="description"
-            defaultValue={current?.description ?? ""}
-            placeholder="Event description"
-            className="mt-4"
-            required
-          />
-          <Button type="submit" className="mt-4 w-full">
-            {current ? "Update event" : "Create event"}
+    <div className="space-y-6">
+      <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-normal">Events</h1>
+          <p className="text-muted-foreground">Manage event pages, ticket inventory and publishing status.</p>
+        </div>
+        {canManageEvents ? (
+          <Button asChild>
+            <Link href={showCreateForm ? "/admin/events" : "/admin/events?create=1"}>
+              {showCreateForm ? <X className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+              {showCreateForm ? "Close form" : "Add event"}
+            </Link>
           </Button>
-        </form>
+        ) : null}
+      </div>
 
-        <div className="rounded-[32px] border border-white/10 bg-white/6 p-6 backdrop-blur">
-          <SectionHeading
-            eyebrow="Existing events"
-            title="Public lineup"
-            description="Use the edit link to preload the form with existing values."
-            className="mb-6"
-          />
-          <div className="space-y-4">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                className="rounded-[24px] border border-white/10 bg-[#0b1020]/60 p-4"
-              >
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="font-medium text-[#f8f4e8]">{event.title}</p>
-                    <p className="text-sm text-white/55">{event.location}</p>
-                    <p className="text-xs text-white/45">{formatDateTime(event.startsAt)}</p>
+      {showCreateForm ? (
+        <AdminModal closeHref="/admin/events" title="Create event" description="Add the event details and starting ticket types.">
+              <form action={saveEventAction} className="grid gap-5">
+                <div className="grid gap-4 lg:grid-cols-2">
+                  <div className="grid gap-2"><Label>Title</Label><Input name="title" required /></div>
+                  <div className="grid gap-2"><Label>Date and time</Label><Input name="startsAt" type="datetime-local" required /></div>
+                  <div className="grid gap-2"><Label>Location</Label><Input name="location" required /></div>
+                  <div className="grid gap-2">
+                    <Label>Banner image</Label>
+                    <AdminImageUpload name="bannerImage" />
                   </div>
-                  <div className="flex gap-2">
-                  <Link
-                      href={`/admin/events?edit=${event.id}`}
-                      className="rounded-full border border-white/10 bg-white/6 px-3 py-2 text-xs text-white/70 transition hover:bg-white/12"
-                    >
-                      Edit
-                    </Link>
-                    <ConfirmActionDialog
-                      triggerLabel="Delete"
-                      title="Delete this event?"
-                      description={`This will remove ${event.title} from the admin catalog. You can re-create it later if needed.`}
-                      confirmLabel="Delete event"
-                      action={deleteEventAction}
-                      fields={{ id: event.id }}
-                    />
+                  <div className="grid gap-2 lg:col-span-2"><Label>Description</Label><Textarea name="description" className="min-h-28" required /></div>
+                </div>
+                <div className="rounded-md border p-4">
+                  <div className="mb-3">
+                    <p className="text-sm font-medium">Ticket types</p>
+                    <p className="text-xs text-muted-foreground">Set the initial price in cents and available quantity.</p>
+                  </div>
+                  <div className="grid gap-3">
+                    {["General", "VIP", "Early Bird"].map((name, index) => (
+                      <div key={name} className="grid gap-2 md:grid-cols-3">
+                        <Input name="ticketName" defaultValue={name} aria-label={`${name} ticket name`} />
+                        <Input name="ticketPriceCents" type="number" defaultValue={index === 1 ? 45000 : 18000} aria-label={`${name} price cents`} />
+                        <Input name="ticketQuantity" type="number" defaultValue={index === 1 ? 80 : 300} aria-label={`${name} quantity`} />
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-            ))}
+                <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
+                  <label className="flex items-center gap-2 text-sm"><input type="checkbox" name="featured" /> Featured event</label>
+                  <div className="flex gap-2">
+                    <Button asChild variant="outline"><Link href="/admin/events">Cancel</Link></Button>
+                    <Button>Save event</Button>
+                  </div>
+                </div>
+              </form>
+        </AdminModal>
+      ) : null}
+
+      <Card className="rounded-md border-border/80 bg-background shadow-sm">
+        <CardHeader>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle>All events</CardTitle>
+              <CardDescription>{events.length} event{events.length === 1 ? "" : "s"} in this workspace.</CardDescription>
+            </div>
+            {canManageEvents && !showCreateForm ? (
+              <Button asChild variant="outline" size="sm">
+                <Link href="/admin/events?create=1"><Plus className="h-4 w-4" />Add event</Link>
+              </Button>
+            ) : null}
           </div>
-        </div>
-      </div>
+        </CardHeader>
+        <CardContent className="overflow-x-auto p-0">
+          <Table>
+            <TableHeader><TableRow><TableHead>Event</TableHead><TableHead>Date</TableHead><TableHead>Tickets</TableHead><TableHead>Revenue</TableHead><TableHead /></TableRow></TableHeader>
+            <TableBody>
+              {events.map((event) => {
+                const sold = event.ticketTypes.reduce((sum, type) => sum + type.sold, 0);
+                const revenue = event.ticketTypes.reduce((sum, type) => sum + type.sold * type.priceCents, 0);
+                return (
+                  <TableRow key={event.id}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-11 w-16 overflow-hidden rounded-md border">
+                          <Image src={event.bannerImage} alt={event.title} fill sizes="64px" className="object-cover" />
+                        </div>
+                        <span className="font-medium">{event.title}</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>{event.startsAt.toLocaleDateString("en-ZA")}</TableCell>
+                    <TableCell>{sold}</TableCell>
+                    <TableCell>{formatMoney(revenue)}</TableCell>
+                    <TableCell>
+                      {canManageEvents ? (
+                        <div className="flex flex-wrap justify-end gap-1">
+                          <Button asChild variant="ghost" size="sm">
+                            <Link href={`/admin/events/${event.id}`}>Edit</Link>
+                          </Button>
+                          <form action={deleteEventAction.bind(null, event.id)}>
+                            <Button variant="ghost" size="sm">Unpublish</Button>
+                          </form>
+                          <form action={duplicateEventAction.bind(null, event.id)}>
+                            <Button variant="ghost" size="sm">Duplicate</Button>
+                          </form>
+                        </div>
+                      ) : null}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+              {events.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="h-32 text-center text-muted-foreground">
+                    No events yet. Use Add event to create your first listing.
+                  </TableCell>
+                </TableRow>
+              ) : null}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 }

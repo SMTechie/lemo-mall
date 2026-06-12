@@ -1,372 +1,323 @@
-import {
-  EnquiryStatus,
-  EnquiryType,
-  OrderItemType,
-  OrderStatus,
-  OrderType,
-  PrismaClient,
-  Role,
-  SocialSource,
-  TicketStatus,
-} from "@prisma/client";
-import {
-  formatDateTime,
-  toSlug,
-} from "../src/lib/utils";
-import {
-  createTicketQrPayload,
-} from "../src/lib/qr";
-import {
-  demoDiscountCodes,
-  demoEvents,
-  demoEnquiries,
-  demoGallery,
-  demoProducts,
-  demoSocialPosts,
-  demoTestimonials,
-} from "../src/lib/demo-data";
+import { PrismaClient } from "@prisma/client";
+import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
+const image = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=1400&q=80`;
+
+const lemoFestEvents = [
+  {
+    slug: "qoai-fashion-and-art-show-2026",
+    title: "QOAI Fashion and Art Show",
+    description: "An opening Lemo Fest showcase celebrating fashion, visual art, creators and culture at Lemo Green Park.",
+    startsAt: new Date("2026-09-26T17:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1509631179647-0177331693ae"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Opening Soon", 0, 1, false]
+    ]
+  },
+  {
+    slug: "golf-open-2026",
+    title: "Golf Open",
+    description: "A Lemo Fest golf day at BFN Golf Club with registration, networking and premium hospitality.",
+    startsAt: new Date("2026-10-09T08:00:00+02:00"),
+    location: "BFN Golf Club",
+    bannerImage: image("photo-1535131749006-b7f58c99034b"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Player Registration", 0, 144, true]
+    ]
+  },
+  {
+    slug: "lovers-and-friends-2026",
+    title: "Lovers and Friends",
+    description: "A soulful Lemo Green Park night built for friends, couples, good music, food and festival energy.",
+    startsAt: new Date("2026-10-09T18:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1514525253161-7a46d19cd819"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Early Bird", 18000, 300, true],
+      ["General", 25000, 700, true],
+      ["VIP", 55000, 150, true]
+    ]
+  },
+  {
+    slug: "afro-soul-and-jazz-2026",
+    title: "Afro Soul and Jazz",
+    description: "A premium Afro soul and jazz experience with live performances, lounges and Lemo Fest hospitality.",
+    startsAt: new Date("2026-10-10T17:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1501386761578-eac5c94b800a"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Early Bird", 20000, 300, true],
+      ["General", 30000, 800, true],
+      ["VIP", 65000, 180, true]
+    ]
+  },
+  {
+    slug: "gospel-experience-2026",
+    title: "Gospel Experience",
+    description: "A Sunday gospel gathering at Lemo Green Park with worship, family atmosphere and community celebration.",
+    startsAt: new Date("2026-10-11T14:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1506157786151-b8491531f063"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Early Bird", 15000, 300, true],
+      ["General", 22000, 900, true],
+      ["VIP", 45000, 120, true]
+    ]
+  },
+  {
+    slug: "hangout-2026",
+    title: "Hangout",
+    description: "A December Lemo Fest hangout bringing music, food, lifestyle and social energy back to Lemo Green Park.",
+    startsAt: new Date("2026-12-12T12:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1492684223066-81342ee5ff30"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Opening Soon", 0, 1, false]
+    ]
+  },
+  {
+    slug: "spin-explosion-2026",
+    title: "Spin Explosion",
+    description: "A high-energy spinning and motorsport culture experience closing the Lemo Fest December weekend.",
+    startsAt: new Date("2026-12-13T12:00:00+02:00"),
+    location: "Lemo Green Park",
+    bannerImage: image("photo-1500530855697-b586d89ba3ee"),
+    featured: true,
+    published: true,
+    ticketTypes: [
+      ["Opening Soon", 0, 1, false]
+    ]
+  }
+] as const;
+
+const permissions = [
+  "manage_products",
+  "manage_events",
+  "manage_orders",
+  "view_orders",
+  "view_analytics",
+  "manage_users",
+  "manage_billing",
+  "scan_tickets",
+  "issue_refunds",
+  "manage_discounts"
+] as const;
+
+const rolePermissions: Record<string, readonly string[]> = {
+  SUPER_ADMIN: permissions,
+  TENANT_OWNER: permissions,
+  ADMIN: ["manage_products", "manage_events", "manage_orders", "view_orders", "view_analytics", "manage_users", "scan_tickets", "issue_refunds", "manage_discounts"],
+  MANAGER: ["manage_products", "manage_events", "manage_orders", "view_orders", "view_analytics", "scan_tickets", "manage_discounts"],
+  EVENT_MANAGER: ["manage_events", "view_orders", "view_analytics", "scan_tickets", "manage_discounts"],
+  SCANNER_STAFF: ["scan_tickets"],
+  SUPPORT_STAFF: ["view_orders", "manage_orders", "issue_refunds"],
+  CUSTOMER: []
+};
+
 async function main() {
+  const tenant = await prisma.tenant.upsert({
+    where: { slug: "lemo-mall" },
+    update: {},
+    create: {
+      name: "Lemo Mall",
+      slug: "lemo-mall",
+      plan: "GROWTH",
+      platformFeeBps: 250,
+      fixedTicketFeeCents: 500,
+      supportEmail: "support@lemomall.co.za",
+      whatsappNumber: "27821234567"
+    }
+  });
+
   const admin = await prisma.user.upsert({
-    where: { email: "admin@lemofest.co.za" },
-    update: {
-      name: "Lemo Fest Admin",
-      role: Role.ADMIN,
-    },
+    where: { email: "admin@lemomall.co.za" },
+    update: { tenantId: tenant.id, referralCode: "ADMINLEMO", role: "SUPER_ADMIN" },
     create: {
-      name: "Lemo Fest Admin",
-      email: "admin@lemofest.co.za",
-      role: Role.ADMIN,
-    },
+      tenantId: tenant.id,
+      name: "Admin",
+      email: "admin@lemomall.co.za",
+      passwordHash: await bcrypt.hash("Admin123!", 12),
+      role: "SUPER_ADMIN",
+      referralCode: "ADMINLEMO"
+    }
   });
 
-  const staff = await prisma.user.upsert({
-    where: { email: "staff@lemofest.co.za" },
-    update: {
-      name: "Scanner Staff",
-      role: Role.STAFF,
-    },
+  const customer = await prisma.user.upsert({
+    where: { email: "customer@lemomall.co.za" },
+    update: { tenantId: tenant.id, referralCode: "CUSTOMERLEMO", role: "CUSTOMER" },
     create: {
-      name: "Scanner Staff",
-      email: "staff@lemofest.co.za",
-      role: Role.STAFF,
-    },
+      tenantId: tenant.id,
+      name: "Customer",
+      email: "customer@lemomall.co.za",
+      passwordHash: await bcrypt.hash("Customer123!", 12),
+      role: "CUSTOMER",
+      referralCode: "CUSTOMERLEMO"
+    }
   });
 
-  const events = [];
-  for (const item of demoEvents) {
-    const event = await prisma.event.upsert({
-      where: { slug: item.slug },
+  const permissionRows = new Map<string, string>();
+  for (const name of permissions) {
+    const permission = await prisma.permission.upsert({
+      where: { name },
+      update: {},
+      create: { name, description: name.replaceAll("_", " ") }
+    });
+    permissionRows.set(name, permission.id);
+  }
+
+  const roleRows = new Map<string, string>();
+  for (const [name, granted] of Object.entries(rolePermissions)) {
+    const role = await prisma.role.upsert({
+      where: { tenantId_name: { tenantId: tenant.id, name } },
       update: {
-        title: item.title,
-        description: item.description,
-        location: item.location,
-        venue: item.venue,
-        address: item.address,
-        startsAt: new Date(item.startsAt),
-        endsAt: item.endsAt ? new Date(item.endsAt) : null,
-        ticketPriceCents: item.ticketPriceCents,
-        currency: item.currency,
-        capacity: item.capacity,
-        imageUrl: item.imageUrl,
-        galleryUrls: item.galleryUrls,
-        tags: item.tags,
-        featured: item.featured,
-        published: item.published,
-        schedule: item.schedule,
-        createdById: admin.id,
+        permissions: {
+          deleteMany: {},
+          create: granted.map((permission) => ({ permissionId: permissionRows.get(permission)! }))
+        }
       },
       create: {
-        slug: item.slug,
-        title: item.title,
-        description: item.description,
-        location: item.location,
-        venue: item.venue,
-        address: item.address,
-        startsAt: new Date(item.startsAt),
-        endsAt: item.endsAt ? new Date(item.endsAt) : null,
-        ticketPriceCents: item.ticketPriceCents,
-        currency: item.currency,
-        capacity: item.capacity,
-        imageUrl: item.imageUrl,
-        galleryUrls: item.galleryUrls,
-        tags: item.tags,
-        featured: item.featured,
-        published: item.published,
-        schedule: item.schedule,
-        createdById: admin.id,
-      },
+        tenantId: tenant.id,
+        name,
+        description: `${name.toLowerCase().replaceAll("_", " ")} role`,
+        permissions: {
+          create: granted.map((permission) => ({ permissionId: permissionRows.get(permission)! }))
+        }
+      }
     });
-
-    events.push(event);
+    roleRows.set(name, role.id);
   }
 
-  const products = [];
-  for (const item of demoProducts) {
-    const product = await prisma.product.upsert({
-      where: { slug: item.slug },
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: admin.id, roleId: roleRows.get("SUPER_ADMIN")! } },
+    update: {},
+    create: { userId: admin.id, roleId: roleRows.get("SUPER_ADMIN")! }
+  });
+
+  await prisma.userRole.upsert({
+    where: { userId_roleId: { userId: customer.id, roleId: roleRows.get("CUSTOMER")! } },
+    update: {},
+    create: { userId: customer.id, roleId: roleRows.get("CUSTOMER")! }
+  });
+
+  const products = [
+    ["festival-tee", "Festival Tee", "Heavyweight cotton tee with a premium screen print.", 34900, 90, "Apparel", image("photo-1523398002811-999ca8dec234")],
+    ["embroidered-cap", "Embroidered Cap", "Structured six-panel cap with stitched Lemo mark.", 24900, 55, "Accessories", image("photo-1521369909029-2afed882baee")],
+    ["insulated-bottle", "Insulated Bottle", "Stainless steel bottle for long event days.", 29900, 42, "Lifestyle", image("photo-1602143407151-7111542de6e8")]
+  ] as const;
+
+  for (const [slug, name, description, priceCents, stock, category, photo] of products) {
+    await prisma.product.upsert({
+      where: { slug },
+      update: { tenantId: tenant.id },
+      create: { tenantId: tenant.id, slug, name, description, priceCents, stock, category, images: [photo], featured: true }
+    });
+  }
+
+  const event = await prisma.event.upsert({
+    where: { slug: "lemo-summer-market-2026" },
+    update: { tenantId: tenant.id },
+    create: {
+      tenantId: tenant.id,
+      slug: "lemo-summer-market-2026",
+      title: "Lemo Summer Market 2026",
+      description: "A full-day market, music, creator merch, food and live performances.",
+      startsAt: new Date("2026-12-12T12:00:00+02:00"),
+      location: "Johannesburg, South Africa",
+      bannerImage: image("photo-1501281668745-f7f57925c3b4"),
+      featured: true
+    }
+  });
+
+  const ticketTypes = [
+    ["Early Bird", 12000, 120],
+    ["General", 18000, 400],
+    ["VIP", 45000, 80]
+  ] as const;
+
+  for (const [name, priceCents, quantity] of ticketTypes) {
+    await prisma.ticketType.upsert({
+      where: { id: `${event.id}-${name}` },
+      update: {},
+      create: { id: `${event.id}-${name}`, eventId: event.id, name, priceCents, quantity }
+    });
+  }
+
+  for (const festivalEvent of lemoFestEvents) {
+    const savedEvent = await prisma.event.upsert({
+      where: { slug: festivalEvent.slug },
       update: {
-        name: item.name,
-        description: item.description,
-        priceCents: item.priceCents,
-        compareAtPriceCents: item.compareAtPriceCents,
-        category: item.category,
-        inventory: item.inventory,
-        featured: item.featured,
-        active: item.active,
-        imageUrl: item.imageUrl,
-        galleryUrls: item.galleryUrls,
+        tenantId: tenant.id,
+        title: festivalEvent.title,
+        description: festivalEvent.description,
+        startsAt: festivalEvent.startsAt,
+        location: festivalEvent.location,
+        bannerImage: festivalEvent.bannerImage,
+        featured: festivalEvent.featured,
+        published: festivalEvent.published
       },
       create: {
-        slug: item.slug,
-        name: item.name,
-        description: item.description,
-        priceCents: item.priceCents,
-        compareAtPriceCents: item.compareAtPriceCents,
-        category: item.category,
-        inventory: item.inventory,
-        featured: item.featured,
-        active: item.active,
-        imageUrl: item.imageUrl,
-        galleryUrls: item.galleryUrls,
-      },
+        tenantId: tenant.id,
+        slug: festivalEvent.slug,
+        title: festivalEvent.title,
+        description: festivalEvent.description,
+        startsAt: festivalEvent.startsAt,
+        location: festivalEvent.location,
+        bannerImage: festivalEvent.bannerImage,
+        featured: festivalEvent.featured,
+        published: festivalEvent.published
+      }
     });
 
-    products.push(product);
+    for (const [name, priceCents, quantity, active] of festivalEvent.ticketTypes) {
+      await prisma.ticketType.upsert({
+        where: { id: `${savedEvent.id}-${name}` },
+        update: { priceCents, quantity, active },
+        create: { id: `${savedEvent.id}-${name}`, eventId: savedEvent.id, name, priceCents, quantity, active }
+      });
+    }
   }
 
-  for (const item of demoTestimonials) {
-    await prisma.testimonial.upsert({
-      where: {
-        id: `${toSlug(item.name)}-${item.rating}`,
-      },
-      update: {
-        name: item.name,
-        role: item.role,
-        quote: item.quote,
-        avatarUrl: item.avatarUrl,
-        rating: item.rating,
-        featured: item.featured,
-        published: item.published,
-      },
-      create: {
-        id: `${toSlug(item.name)}-${item.rating}`,
-        name: item.name,
-        role: item.role,
-        quote: item.quote,
-        avatarUrl: item.avatarUrl,
-        rating: item.rating,
-        featured: item.featured,
-        published: item.published,
-      },
-    });
-  }
+  await prisma.discountCode.upsert({
+    where: { code: "LAUNCH10" },
+    update: { tenantId: tenant.id },
+    create: { tenantId: tenant.id, code: "LAUNCH10", type: "PERCENTAGE", value: 10, usageLimit: 500 }
+  });
 
-  for (const item of demoGallery) {
-    await prisma.galleryImage.upsert({
-      where: { slug: item.slug },
-      update: {
-        title: item.title,
-        description: item.description,
-        imageUrl: item.imageUrl,
-        downloadUrl: item.downloadUrl,
-        altText: item.altText,
-        featured: item.featured,
-        published: item.published,
-      },
-      create: {
-        slug: item.slug,
-        title: item.title,
-        description: item.description,
-        imageUrl: item.imageUrl,
-        downloadUrl: item.downloadUrl,
-        altText: item.altText,
-        featured: item.featured,
-        published: item.published,
-      },
-    });
-  }
-
-  for (const item of demoSocialPosts) {
-    await prisma.socialPost.upsert({
-      where: { externalId: item.externalId },
-      update: {
-        source: SocialSource.FACEBOOK,
-        message: item.message,
-        link: item.link,
-        imageUrl: item.imageUrl,
-        authorName: item.authorName,
-        publishedAt: new Date(item.publishedAt),
-        featured: item.featured,
-      },
-      create: {
-        externalId: item.externalId,
-        source: SocialSource.FACEBOOK,
-        message: item.message,
-        link: item.link,
-        imageUrl: item.imageUrl,
-        authorName: item.authorName,
-        publishedAt: new Date(item.publishedAt),
-        featured: item.featured,
-      },
-    });
-  }
-
-  await prisma.enquiry.deleteMany();
-  for (const item of demoEnquiries) {
-    await prisma.enquiry.create({
-      data: {
-        type: item.type as EnquiryType,
-        status: item.status as EnquiryStatus,
-        name: item.name,
-        email: item.email,
-        phone: item.phone,
-        subject: item.subject,
-        message: item.message,
-        source: item.source,
-        notes: item.notes,
-        createdAt: new Date(item.createdAt),
-        resolvedAt: item.resolvedAt ? new Date(item.resolvedAt) : null,
-      },
-    });
-  }
-
-  for (const item of demoDiscountCodes) {
-    await prisma.discountCode.upsert({
-      where: { code: item.code },
-      update: {
-        description: item.description,
-        type: item.type as never,
-        value: item.value,
-        active: item.active,
-        usageLimit: item.usageLimit,
-      },
-      create: {
-        code: item.code,
-        description: item.description,
-        type: item.type as never,
-        value: item.value,
-        active: item.active,
-        usageLimit: item.usageLimit,
-      },
-    });
-  }
-
-  const paidOrder = await prisma.order.upsert({
-    where: { orderNumber: "LF-DEMO-PAID-001" },
+  await prisma.pricingRule.upsert({
+    where: { id: `${event.id}-early-bird` },
     update: {},
     create: {
-      orderNumber: "LF-DEMO-PAID-001",
-      type: OrderType.TICKET,
-      status: OrderStatus.PAID,
-      currency: "ZAR",
-      subtotalCents: events[0].ticketPriceCents * 2,
-      discountCents: 650,
-      totalCents: events[0].ticketPriceCents * 2 - 650,
-      paygateReference: "LF-DEMO-PAID-001",
-      customerName: "Mia Khumalo",
-      customerEmail: "mia@example.com",
-      customerPhone: "+27 82 555 0101",
-      userId: admin.id,
-      paidAt: new Date("2026-03-27T14:00:00.000Z"),
-      items: {
-        create: [
-          {
-            type: OrderItemType.TICKET,
-            name: events[0].title,
-            quantity: 2,
-            unitPriceCents: events[0].ticketPriceCents,
-            totalPriceCents: events[0].ticketPriceCents * 2,
-            eventId: events[0].id,
-          },
-        ],
-      },
-    },
-    include: {
-      items: true,
-    },
+      id: `${event.id}-early-bird`,
+      eventId: event.id,
+      name: "Launch Early Bird",
+      type: "EARLY_BIRD",
+      discountBps: 1500,
+      endsAt: new Date("2026-08-31T23:59:59+02:00")
+    }
   });
 
-  await prisma.order.upsert({
-    where: { orderNumber: "LF-DEMO-PROD-001" },
-    update: {},
-    create: {
-      orderNumber: "LF-DEMO-PROD-001",
-      type: OrderType.PRODUCT,
-      status: OrderStatus.FULFILLED,
-      currency: "ZAR",
-      subtotalCents: products[0].priceCents,
-      discountCents: 0,
-      totalCents: products[0].priceCents,
-      paygateReference: "LF-DEMO-PROD-001",
-      customerName: "Lebo Dlamini",
-      customerEmail: "lebo@example.com",
-      customerPhone: "+27 83 555 2020",
-      userId: staff.id,
-      paidAt: new Date("2026-03-28T14:00:00.000Z"),
-      fulfilledAt: new Date("2026-03-29T14:00:00.000Z"),
-      items: {
-        create: [
-          {
-            type: OrderItemType.PRODUCT,
-            name: products[0].name,
-            quantity: 1,
-            unitPriceCents: products[0].priceCents,
-            totalPriceCents: products[0].priceCents,
-            productId: products[0].id,
-          },
-        ],
-      },
-    },
-  });
-
-  const ticketOneCode = "LF-TICKET-0001";
-  const ticketTwoCode = "LF-TICKET-0002";
-
-  await prisma.ticket.upsert({
-    where: { code: ticketOneCode },
-    update: {},
-    create: {
-      code: ticketOneCode,
-      qrPayload: createTicketQrPayload(ticketOneCode),
-      status: TicketStatus.VALID,
-      eventId: events[0].id,
-      userId: admin.id,
-      orderId: paidOrder.id,
-      holderName: "Mia Khumalo",
-      holderEmail: "mia@example.com",
-      notes: `Seeded at ${formatDateTime(new Date())}`,
-    },
-  });
-
-  await prisma.ticket.upsert({
-    where: { code: ticketTwoCode },
-    update: {},
-    create: {
-      code: ticketTwoCode,
-      qrPayload: createTicketQrPayload(ticketTwoCode),
-      status: TicketStatus.USED,
-      eventId: events[0].id,
-      userId: admin.id,
-      orderId: paidOrder.id,
-      holderName: "Mia Khumalo",
-      holderEmail: "mia@example.com",
-      usedAt: new Date("2026-03-28T10:00:00.000Z"),
-      checkedInById: staff.id,
-      notes: "Checked in at demo gate B.",
-    },
-  });
-
-  console.log("Seed complete.");
+  console.log({ admin: admin.email, password: "Admin123!" });
 }
 
 main()
   .catch((error) => {
     console.error(error);
-    process.exitCode = 1;
+    process.exit(1);
   })
-  .finally(async () => {
-    await prisma.$disconnect();
-  });
+  .finally(async () => prisma.$disconnect());

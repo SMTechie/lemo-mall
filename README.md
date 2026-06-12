@@ -1,94 +1,125 @@
-# Lemo Fest
+# Lemo Mall
 
-Production-ready Next.js ticketing and eCommerce platform for Lemo Fest.
+Production-oriented SaaS storefront for selling merchandise and event tickets with Next.js App Router, Auth.js, Prisma, Neon, Stripe, Cloudinary and QR ticket scanning.
 
 ## Stack
 
-- Next.js App Router
-- React 19
-- Tailwind CSS
-- PostgreSQL
-- Prisma
-- NextAuth / Auth.js
-- PayGate integration
-- Nodemailer email delivery
-- Cloudinary-ready image storage
-- QR code generation
-- PWA support with service worker caching
+- Next.js 16 App Router, TypeScript, Tailwind CSS, ShadCN-style UI primitives and Framer Motion dependency
+- Server Actions and Route Handlers only, optimized for Vercel serverless
+- Neon PostgreSQL with Prisma driver adapter and pooled `DATABASE_URL`
+- Auth.js credentials auth with bcrypt password hashing and admin/customer roles
+- Stripe Checkout in ZAR with signed webhook verification
+- Cloudinary signed upload helper
+- QR ticket generation and browser-camera scanner
+- Recharts admin analytics and CSV export
+- WhatsApp support links, enquiry inbox, help centre and policy pages
 
-## Build Order
+## Local Setup
 
-1. Database schema
-2. Backend actions, auth, payments, QR codes, and email
-3. Frontend public site, store, admin, and scanner UI
-
-## Setup
-
-1. Copy `.env.example` to `.env.local` and fill in the secrets.
-2. Install dependencies:
+1. Install dependencies:
 
 ```bash
 npm install
 ```
 
-3. Push the Prisma schema to PostgreSQL:
+2. Create `.env` from `.env.example` and fill values.
+
+3. Create a Neon project:
+
+- Open Neon and create a PostgreSQL database.
+- Copy the pooled connection string. It usually contains `-pooler` in the host.
+- Set `DATABASE_URL` to that pooled URL with `sslmode=require`.
+
+4. Push the schema and seed starter data:
 
 ```bash
 npm run db:push
-```
-
-4. Seed the demo data:
-
-```bash
 npm run db:seed
 ```
 
-5. Start the development server:
+Seeded users:
+
+- Admin: `admin@lemomall.co.za` / `Admin123!`
+- Customer: `customer@lemomall.co.za` / `Customer123!`
+
+5. Run the app:
 
 ```bash
 npm run dev
 ```
 
-## Demo Email
+## Stripe Setup
 
-For local testing, use a mail catcher such as Mailpit or MailHog.
+1. Create or open a Stripe account.
+2. Add `STRIPE_SECRET_KEY` and `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` to `.env`.
+3. For local webhook testing:
 
-Demo config:
-
-```env
-SMTP_HOST=127.0.0.1
-SMTP_PORT=1025
-SMTP_SECURE=false
-SMTP_USER=
-SMTP_PASSWORD=
-MAIL_FROM=Lemo Fest <demo@lemofest.co.za>
+```bash
+stripe listen --forward-to localhost:3000/api/stripe/webhook
 ```
 
-- Outgoing tickets and magic-link emails will be captured by the local inbox instead of being sent to a real mailbox.
-- If SMTP settings are left blank, the app still runs and logs the email payload to the console.
+4. Copy the generated `whsec_...` value to `STRIPE_WEBHOOK_SECRET`.
 
-## Seed Accounts
+Required webhook events:
 
-- `admin@lemofest.co.za`
-- `staff@lemofest.co.za`
+- `checkout.session.completed`
+- `checkout.session.expired`
+- `checkout.session.async_payment_failed`
 
-## Key Routes
+The checkout uses ZAR line items. The Stripe Checkout Session creates the underlying PaymentIntent, and the webhook stores `stripePaymentIntentId` when payment completes.
 
-- `/` landing page
-- `/events` events listing
-- `/events/[slug]` event detail
-- `/shop` merch store
-- `/shop/[slug]` product detail
-- `/gallery` gallery grid
-- `/news` social/news feed
-- `/checkout` cart checkout
-- `/tickets/[code]` printable ticket
-- `/verify` staff scanner PWA
-- `/admin` dashboard
+## Cloudinary Setup
 
-## Notes
+1. Create a Cloudinary account.
+2. Add `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET` and `NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME`.
+3. Admin-only signed upload credentials are available at `/api/cloudinary/sign` for integrating an upload widget or custom uploader.
 
-- The checkout flow supports real PayGate credentials when `PAYGATE_ID` and `PAYGATE_ENCRYPTION_KEY` are set.
-- Without payment credentials, the checkout page uses the demo confirmation route so the app still works locally.
-- The scanner route is protected to `ADMIN` and `STAFF` roles.
-- Facebook syncing falls back to the seeded demo posts when Graph API credentials are missing.
+## Vercel Deployment
+
+1. Import the GitHub repo into Vercel.
+2. Add all variables from `.env.example` in Vercel Project Settings.
+3. Use the Neon pooled connection string for `DATABASE_URL`.
+4. Set Stripe webhook endpoint to:
+
+```text
+https://your-domain.vercel.app/api/stripe/webhook
+```
+
+5. Run `npm run db:push` against production from a trusted machine or CI step.
+6. Deploy. The app avoids traditional servers and uses Vercel-compatible Route Handlers and Server Actions.
+
+## Important Routes
+
+- `/shop` and `/shop/[slug]` merchandise storefront
+- `/events` and `/events/[slug]` event ticketing
+- `/checkout` unified merch and ticket checkout
+- `/account/orders` customer order history
+- `/tickets/[code]` QR ticket display
+- `/contact` support enquiries and WhatsApp escalation
+- `/help`, `/privacy`, `/terms`, `/refunds`
+- `/admin` dashboard with metrics and charts
+- `/admin/products`, `/admin/events`, `/admin/orders`, `/admin/users`
+- `/admin/discounts` promo-code management
+- `/admin/support` customer support inbox
+- `/admin/scanner` browser-camera QR check-in scanner
+- `/api/stripe/webhook` signed Stripe webhook
+
+## WhatsApp Support
+
+Set `NEXT_PUBLIC_WHATSAPP_NUMBER` to the business number in international format without `+`.
+
+```text
+27821234567
+```
+
+The storefront uses this for the floating WhatsApp button, footer, contact page and help centre.
+
+## Security Notes
+
+- Passwords are hashed with bcrypt.
+- Admin routes are protected by JWT role checks in middleware.
+- Server writes validate input with Zod.
+- Stripe webhook signatures are mandatory.
+- Product stock and ticket capacity are reserved atomically before Stripe redirect to prevent overselling.
+- Pending inventory is released on Stripe expiration or async payment failure.
+- Scanner API includes basic in-memory rate limiting suitable for serverless burst protection.

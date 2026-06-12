@@ -1,0 +1,8 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect width="512" height="512" rx="112" fill="#0B0B12"/>
+  <circle cx="256" cy="256" r="190" fill="#151520" stroke="#F6F1E8" stroke-width="4" stroke-dasharray="2 18" stroke-linecap="round"/>
+  <circle cx="256" cy="256" r="146" fill="#0B0B12" stroke="#F6F1E8" stroke-width="2" opacity="0.55"/>
+  <path d="M151 207c24-37 54-56 90-56 29 0 56 13 80 39 17 18 31 27 43 27 11 0 22-7 33-22" stroke="#F6F1E8" stroke-width="12" stroke-linecap="round"/>
+  <text x="256" y="255" text-anchor="middle" fill="#F6F1E8" font-family="Arial, Helvetica, sans-serif" font-size="72" font-weight="800" letter-spacing="2">LEMO</text>
+  <text x="256" y="321" text-anchor="middle" fill="#F6F1E8" font-family="Arial, Helvetica, sans-serif" font-size="62" font-weight="800" letter-spacing="3">FEST</text>
+</svg>

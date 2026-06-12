@@ -1,14 +1,14 @@
-import { BrandLogo } from "@/components/site/brand-logo";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function Loading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0b0b0b] px-6">
-      <BrandLogo
-        priority
-        width={240}
-        height={78}
-        className="animate-fade-in motion-reduce:animate-none"
-      />
+    <main className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
+      <Skeleton className="h-10 w-64" />
+      <div className="mt-8 grid gap-4 md:grid-cols-3">
+        <Skeleton className="h-64" />
+        <Skeleton className="h-64" />
+        <Skeleton className="h-64" />
       </div>
+    </main>
   );
 }

@@ -1,23 +1,26 @@
 "use client";
 
+import { LocalThemeProvider } from "@/components/theme-provider";
+import { ToastProvider } from "@/components/ui/toaster";
 import { CartProvider } from "@/components/cart/cart-provider";
-import { SessionProvider } from "next-auth/react";
-import { useEffect, type ReactNode } from "react";
+import { PermissionProvider } from "@/hooks/usePermissions";
 
-export function Providers({ children }: { children: ReactNode }) {
-  useEffect(() => {
-    if (!("serviceWorker" in navigator)) {
-      return;
-    }
-
-    navigator.serviceWorker.register("/sw.js").catch(() => {
-      // Ignore SW registration failures in unsupported environments.
-    });
-  }, []);
-
+export function Providers({
+  children,
+  permissions = [],
+  roles = []
+}: {
+  children: React.ReactNode;
+  permissions?: string[];
+  roles?: string[];
+}) {
   return (
-    <SessionProvider>
-      <CartProvider>{children}</CartProvider>
-    </SessionProvider>
+    <LocalThemeProvider>
+      <PermissionProvider permissions={permissions} roles={roles}>
+        <ToastProvider>
+          <CartProvider>{children}</CartProvider>
+        </ToastProvider>
+      </PermissionProvider>
+    </LocalThemeProvider>
   );
 }

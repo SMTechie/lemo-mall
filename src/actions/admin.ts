@@ -1,414 +1,218 @@
 "use server";
 
-import { auth } from "@/auth";
-import { prisma } from "@/lib/db";
-import { resolveImageUrl } from "@/lib/storage";
-import {
-  eventUpsertSchema,
-  galleryUpsertSchema,
-  productUpsertSchema,
-  socialSyncSchema,
-  testimonialUpsertSchema,
-} from "@/lib/validators";
+import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { demoSocialPosts } from "@/lib/demo-data";
-import { verifyAndConsumeTicket } from "@/lib/tickets";
+import { prisma } from "@/lib/prisma";
+import { logActivity, requirePermission } from "@/lib/permissions";
+import { campaignSchema, discountSchema, eventSchema, pricingRuleSchema, productSchema } from "@/lib/validators";
+import { slugify } from "@/lib/utils";
 
-async function requireAdmin() {
-  const session = await auth();
-  if (!session?.user || session.user.role !== "ADMIN") {
-    redirect("/login");
-  }
-
-  return session;
-}
-
-async function requirePrivileged() {
-  const session = await auth();
-  if (!session?.user || !["ADMIN", "STAFF"].includes(session.user.role)) {
-    redirect("/login");
-  }
-
-  return session;
-}
-
-function asString(value: FormDataEntryValue | null) {
-  return typeof value === "string" && value.trim() ? value.trim() : undefined;
-}
-
-function asBoolean(value: FormDataEntryValue | null) {
-  if (typeof value !== "string") return false;
-  return value === "on" || value === "true" || value === "1";
-}
-
-function asNumber(value: FormDataEntryValue | null) {
-  if (typeof value !== "string" || value.trim() === "") return undefined;
-  const parsed = Number(value);
-  return Number.isNaN(parsed) ? undefined : parsed;
-}
-
-function asFile(value: FormDataEntryValue | null) {
-  return value instanceof File && value.size > 0 ? value : null;
-}
-
-export async function upsertEventAction(formData: FormData) {
-  await requireAdmin();
-
-  const imageUrl = await resolveImageUrl({
-    file: asFile(formData.get("imageFile")),
-    fallbackUrl: asString(formData.get("imageUrl")),
-    folder: "events",
+export async function saveProductAction(formData: FormData) {
+  await requirePermission("manage_products");
+  const images = formData
+    .getAll("images")
+    .flatMap((value) => String(value).split("\n"))
+    .map((v) => v.trim())
+    .filter(Boolean);
+  const parsed = productSchema.safeParse({
+    ...Object.fromEntries(formData),
+    images,
+    featured: formData.get("featured") === "on",
+    active: formData.get("active") !== "off"
   });
 
-  const parsed = eventUpsertSchema.parse({
-    id: asString(formData.get("id")),
-    title: asString(formData.get("title")),
-    slug: asString(formData.get("slug")),
-    description: asString(formData.get("description")),
-    location: asString(formData.get("location")),
-    venue: asString(formData.get("venue")),
-    address: asString(formData.get("address")),
-    startsAt: asString(formData.get("startsAt")),
-    endsAt: asString(formData.get("endsAt")),
-    ticketPriceCents: asNumber(formData.get("ticketPriceCents")),
-    capacity: asNumber(formData.get("capacity")),
-    imageUrl,
-    galleryUrls: asString(formData.get("galleryUrls")),
-    tags: asString(formData.get("tags")),
-    featured: asBoolean(formData.get("featured")),
-    published: asBoolean(formData.get("published")),
+  if (!parsed.success) throw new Error("Invalid product data");
+  const { id, ...data } = parsed.data;
+  const slug = slugify(data.name);
+
+  if (id) {
+    await prisma.product.update({ where: { id }, data: { ...data, slug } });
+  } else {
+    await prisma.product.create({ data: { ...data, slug } });
+  }
+
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+  await logActivity({ action: id ? "product.updated" : "product.created", entityType: "Product", entityId: id });
+  redirect("/admin/products");
+}
+
+export async function deleteProductAction(id: string) {
+  await requirePermission("manage_products");
+  await prisma.product.update({ where: { id }, data: { active: false } });
+  await logActivity({ action: "product.hidden", entityType: "Product", entityId: id });
+  revalidatePath("/admin/products");
+  revalidatePath("/shop");
+}
+
+export async function saveEventAction(formData: FormData) {
+  await requirePermission("manage_events");
+  const names = formData.getAll("ticketName").map(String);
+  const prices = formData.getAll("ticketPriceCents").map(String);
+  const quantities = formData.getAll("ticketQuantity").map(String);
+
+  const ticketTypes = names
+    .map((name, index) => ({
+      name,
+      priceCents: Number(prices[index]),
+      quantity: Number(quantities[index]),
+      active: true
+    }))
+    .filter((ticket) => ticket.name);
+
+  const parsed = eventSchema.safeParse({
+    ...Object.fromEntries(formData),
+    featured: formData.get("featured") === "on",
+    published: formData.get("published") !== "off",
+    ticketTypes
   });
 
-  const { id, ...eventData } = parsed;
+  if (!parsed.success) throw new Error("Invalid event data");
+  const { id, ticketTypes: types, ...data } = parsed.data;
+  const slug = slugify(data.title);
 
   if (id) {
     await prisma.event.update({
       where: { id },
       data: {
-        ...eventData,
-        venue: eventData.venue ?? null,
-        address: eventData.address ?? null,
-        endsAt: eventData.endsAt ? new Date(eventData.endsAt) : null,
-        startsAt: new Date(eventData.startsAt),
-      },
+        ...data,
+        slug,
+        ticketTypes: {
+          deleteMany: { sold: 0 },
+          create: types.map((ticket) => ({
+            name: ticket.name,
+            description: ticket.description,
+            priceCents: ticket.priceCents,
+            quantity: ticket.quantity,
+            active: ticket.active
+          }))
+        }
+      }
     });
   } else {
-    const session = await requireAdmin();
     await prisma.event.create({
       data: {
-        ...eventData,
-        venue: eventData.venue ?? null,
-        address: eventData.address ?? null,
-        endsAt: eventData.endsAt ? new Date(eventData.endsAt) : null,
-        startsAt: new Date(eventData.startsAt),
-        createdById: session.user.id,
-      },
+        ...data,
+        slug,
+        ticketTypes: { create: types }
+      }
     });
   }
 
-  redirect("/admin/events?success=1");
+  revalidatePath("/admin/events");
+  revalidatePath("/events");
+  await logActivity({ action: id ? "event.updated" : "event.created", entityType: "Event", entityId: id });
+  redirect("/admin/events");
 }
 
-export async function deleteEventAction(formData: FormData) {
-  await requireAdmin();
-  const id = asString(formData.get("id"));
-  if (!id) redirect("/admin/events?error=missing-id");
-
-  await prisma.event.delete({ where: { id } });
-  redirect("/admin/events?deleted=1");
+export async function deleteEventAction(id: string) {
+  await requirePermission("manage_events");
+  await prisma.event.update({ where: { id }, data: { published: false } });
+  await logActivity({ action: "event.unpublished", entityType: "Event", entityId: id });
+  revalidatePath("/admin/events");
+  revalidatePath("/events");
 }
 
-export async function upsertProductAction(formData: FormData) {
-  await requireAdmin();
-
-  const imageUrl = await resolveImageUrl({
-    file: asFile(formData.get("imageFile")),
-    fallbackUrl: asString(formData.get("imageUrl")),
-    folder: "products",
+export async function saveDiscountAction(formData: FormData) {
+  await requirePermission("manage_discounts");
+  const parsed = discountSchema.safeParse({
+    ...Object.fromEntries(formData),
+    active: formData.get("active") !== "off"
   });
 
-  const parsed = productUpsertSchema.parse({
-    id: asString(formData.get("id")),
-    name: asString(formData.get("name")),
-    slug: asString(formData.get("slug")),
-    description: asString(formData.get("description")),
-    category: asString(formData.get("category")),
-    priceCents: asNumber(formData.get("priceCents")),
-    compareAtPriceCents: asNumber(formData.get("compareAtPriceCents")),
-    inventory: asNumber(formData.get("inventory")),
-    imageUrl,
-    galleryUrls: asString(formData.get("galleryUrls")),
-    featured: asBoolean(formData.get("featured")),
-    active: asBoolean(formData.get("active")),
+  if (!parsed.success) throw new Error("Invalid discount code");
+
+  await prisma.discountCode.upsert({
+    where: { code: parsed.data.code },
+    update: parsed.data,
+    create: parsed.data
   });
 
-  const { id, ...productData } = parsed;
-
-  if (id) {
-    await prisma.product.update({
-      where: { id },
-      data: {
-        ...productData,
-        compareAtPriceCents: productData.compareAtPriceCents ?? null,
-      },
-    });
-  } else {
-    await prisma.product.create({
-      data: {
-        ...productData,
-        compareAtPriceCents: productData.compareAtPriceCents ?? null,
-      },
-    });
-  }
-
-  redirect("/admin/products?success=1");
+  revalidatePath("/admin/discounts");
+  redirect("/admin/discounts");
 }
 
-export async function deleteProductAction(formData: FormData) {
-  await requireAdmin();
-  const id = asString(formData.get("id"));
-  if (!id) redirect("/admin/products?error=missing-id");
-
-  await prisma.product.delete({ where: { id } });
-  redirect("/admin/products?deleted=1");
+export async function toggleDiscountAction(code: string, active: boolean) {
+  await requirePermission("manage_discounts");
+  await prisma.discountCode.update({ where: { code }, data: { active } });
+  revalidatePath("/admin/discounts");
 }
 
-export async function upsertGalleryAction(formData: FormData) {
-  await requireAdmin();
-
-  const imageUrl = await resolveImageUrl({
-    file: asFile(formData.get("imageFile")),
-    fallbackUrl: asString(formData.get("imageUrl")),
-    folder: "gallery",
+export async function savePricingRuleAction(formData: FormData) {
+  await requirePermission("manage_events");
+  const parsed = pricingRuleSchema.safeParse({
+    ...Object.fromEntries(formData),
+    active: formData.get("active") !== "off"
   });
+  if (!parsed.success) throw new Error("Invalid pricing rule");
 
-  const parsed = galleryUpsertSchema.parse({
-    id: asString(formData.get("id")),
-    title: asString(formData.get("title")),
-    slug: asString(formData.get("slug")),
-    description: asString(formData.get("description")),
-    imageUrl,
-    downloadUrl: asString(formData.get("downloadUrl")),
-    altText: asString(formData.get("altText")),
-    eventId: asString(formData.get("eventId")),
-    featured: asBoolean(formData.get("featured")),
-    published: asBoolean(formData.get("published")),
+  await prisma.pricingRule.create({ data: parsed.data });
+  revalidatePath("/admin/pricing");
+  redirect("/admin/pricing");
+}
+
+export async function saveCampaignAction(formData: FormData) {
+  await requirePermission("manage_users");
+  const parsed = campaignSchema.safeParse(Object.fromEntries(formData));
+  if (!parsed.success) throw new Error("Invalid campaign");
+
+  await prisma.campaign.create({ data: parsed.data });
+  revalidatePath("/admin/campaigns");
+  redirect("/admin/campaigns");
+}
+
+export async function approveRefundAction(id: string, approved: boolean) {
+  await requirePermission("issue_refunds");
+  await prisma.refundRequest.update({
+    where: { id },
+    data: { status: approved ? "APPROVED" : "REJECTED" }
   });
-
-  const { id, ...galleryData } = parsed;
-
-  if (id) {
-    await prisma.galleryImage.update({
-      where: { id },
-      data: {
-        ...galleryData,
-        description: galleryData.description ?? null,
-        downloadUrl: galleryData.downloadUrl ?? null,
-        altText: galleryData.altText ?? null,
-        eventId: galleryData.eventId ?? null,
-      },
-    });
-  } else {
-    await prisma.galleryImage.create({
-      data: {
-        ...galleryData,
-        description: galleryData.description ?? null,
-        downloadUrl: galleryData.downloadUrl ?? null,
-        altText: galleryData.altText ?? null,
-        eventId: galleryData.eventId ?? null,
-      },
-    });
-  }
-
-  redirect("/admin/gallery?success=1");
+  revalidatePath("/admin/refunds");
 }
 
-export async function deleteGalleryAction(formData: FormData) {
-  await requireAdmin();
-  const id = asString(formData.get("id"));
-  if (!id) redirect("/admin/gallery?error=missing-id");
+export async function addCustomerTagAction(formData: FormData) {
+  await requirePermission("manage_users");
+  const userId = String(formData.get("userId"));
+  const tag = String(formData.get("tag") || "").trim().toUpperCase();
+  if (!tag) return;
 
-  await prisma.galleryImage.delete({ where: { id } });
-  redirect("/admin/gallery?deleted=1");
+  const user = await prisma.user.findUnique({ where: { id: userId }, select: { tags: true } });
+  if (!user || user.tags.includes(tag)) return;
+
+  await prisma.user.update({ where: { id: userId }, data: { tags: { push: tag } } });
+  revalidatePath(`/admin/users/${userId}`);
 }
 
-export async function upsertTestimonialAction(formData: FormData) {
-  await requireAdmin();
-
-  const avatarUrl = await resolveImageUrl({
-    file: asFile(formData.get("avatarFile")),
-    fallbackUrl: asString(formData.get("avatarUrl")),
-    folder: "testimonials",
+export async function duplicateEventAction(id: string) {
+  await requirePermission("manage_events");
+  const event = await prisma.event.findUnique({
+    where: { id },
+    include: { ticketTypes: true }
   });
+  if (!event) throw new Error("Event not found");
 
-  const parsed = testimonialUpsertSchema.parse({
-    id: asString(formData.get("id")),
-    name: asString(formData.get("name")),
-    role: asString(formData.get("role")),
-    quote: asString(formData.get("quote")),
-    avatarUrl,
-    rating: asNumber(formData.get("rating")),
-    featured: asBoolean(formData.get("featured")),
-    published: asBoolean(formData.get("published")),
-  });
-
-  const { id, ...testimonialData } = parsed;
-
-  if (id) {
-    await prisma.testimonial.update({
-      where: { id },
-      data: {
-        ...testimonialData,
-        role: testimonialData.role ?? null,
-        avatarUrl: testimonialData.avatarUrl ?? null,
-      },
-    });
-  } else {
-    await prisma.testimonial.create({
-      data: {
-        ...testimonialData,
-        role: testimonialData.role ?? null,
-        avatarUrl: testimonialData.avatarUrl ?? null,
-      },
-    });
-  }
-
-  redirect("/admin/testimonials?success=1");
-}
-
-export async function deleteTestimonialAction(formData: FormData) {
-  await requireAdmin();
-  const id = asString(formData.get("id"));
-  if (!id) redirect("/admin/testimonials?error=missing-id");
-
-  await prisma.testimonial.delete({ where: { id } });
-  redirect("/admin/testimonials?deleted=1");
-}
-
-export async function syncSocialPostsAction(formData: FormData) {
-  await requireAdmin();
-  socialSyncSchema.parse({ source: asString(formData.get("source")) ?? "FACEBOOK" });
-
-  const pageId = process.env.FACEBOOK_PAGE_ID;
-  const token = process.env.FACEBOOK_ACCESS_TOKEN;
-
-  const posts =
-    pageId && token
-      ? await (async () => {
-          try {
-            const response = await fetch(
-              `https://graph.facebook.com/v19.0/${pageId}/posts?fields=message,created_time,permalink_url,full_picture,from&limit=6&access_token=${token}`,
-              {
-                cache: "no-store",
-              },
-            );
-            if (!response.ok) {
-              throw new Error("Facebook sync failed");
-            }
-
-            const json = (await response.json()) as {
-              data?: Array<{
-                id: string;
-                message?: string;
-                created_time?: string;
-                permalink_url?: string;
-                full_picture?: string;
-                from?: { name?: string };
-              }>;
-            };
-
-            return (
-              json.data?.map((entry) => ({
-                externalId: entry.id,
-                source: "FACEBOOK",
-                message: entry.message ?? "New Facebook post",
-                link: entry.permalink_url ?? null,
-                imageUrl: entry.full_picture ?? null,
-                authorName: entry.from?.name ?? "Lemo Fest",
-                publishedAt: entry.created_time ? new Date(entry.created_time) : new Date(),
-                featured: true,
-              })) ?? demoSocialPosts
-            );
-          } catch {
-            return demoSocialPosts;
-          }
-        })()
-      : demoSocialPosts;
-
-  for (const post of posts) {
-    await prisma.socialPost.upsert({
-      where: { externalId: post.externalId },
-      update: {
-        message: post.message,
-        link: post.link,
-        imageUrl: post.imageUrl,
-        authorName: post.authorName,
-        publishedAt: new Date(post.publishedAt),
-        featured: post.featured,
-      },
-      create: {
-        externalId: post.externalId,
-        source: "FACEBOOK",
-        message: post.message,
-        link: post.link,
-        imageUrl: post.imageUrl,
-        authorName: post.authorName,
-        publishedAt: new Date(post.publishedAt),
-        featured: post.featured,
-      },
-    });
-  }
-
-  redirect("/admin/social?synced=1");
-}
-
-export async function upsertTicketStatusAction(formData: FormData) {
-  await requirePrivileged();
-  const code = asString(formData.get("code"));
-  const status = asString(formData.get("status"));
-
-  if (!code || !status) {
-    redirect("/admin/tickets?error=missing-data");
-  }
-
-  await prisma.ticket.update({
-    where: { code },
+  await prisma.event.create({
     data: {
-      status: status as "VALID" | "USED" | "VOID",
-      usedAt: status === "USED" ? new Date() : null,
-    },
+      tenantId: event.tenantId,
+      title: `${event.title} Copy`,
+      slug: `${event.slug}-copy-${Date.now().toString(36)}`,
+      description: event.description,
+      startsAt: new Date(event.startsAt.getTime() + 7 * 24 * 60 * 60 * 1000),
+      location: event.location,
+      bannerImage: event.bannerImage,
+      published: false,
+      ticketTypes: {
+        create: event.ticketTypes.map((ticket) => ({
+          name: ticket.name,
+          description: ticket.description,
+          priceCents: ticket.priceCents,
+          quantity: ticket.quantity,
+          active: ticket.active
+        }))
+      }
+    }
   });
 
-  redirect("/admin/tickets?updated=1");
-}
-
-export async function verifyTicketNowAction(formData: FormData) {
-  await requirePrivileged();
-  const code = asString(formData.get("code"));
-
-  if (!code) {
-    redirect("/admin/tickets?error=missing-code");
-  }
-
-  const result = await verifyAndConsumeTicket({ code, scannerUserId: (await auth())?.user?.id });
-
-  redirect(
-    `/admin/tickets?verified=${result.valid ? "1" : "0"}&code=${encodeURIComponent(code)}`,
-  );
-}
-
-export async function fulfillOrderAction(formData: FormData) {
-  await requireAdmin();
-  const orderNumber = asString(formData.get("orderNumber"));
-  if (!orderNumber) redirect("/admin/orders?error=missing-order");
-
-  await prisma.order.update({
-    where: { orderNumber },
-    data: {
-      status: "FULFILLED",
-      fulfilledAt: new Date(),
-    },
-  });
-
-  redirect("/admin/orders?fulfilled=1");
+  revalidatePath("/admin/events");
+  redirect("/admin/events");
 }

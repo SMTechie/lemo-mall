@@ -1,187 +1,177 @@
 import { z } from "zod";
+import { isStoredImagePath } from "@/lib/images";
 
-const csvToArray = z
+export const emailSchema = z.string().email().toLowerCase();
+export const passwordSchema = z.string().min(8).max(128);
+
+export const registerSchema = z.object({
+  name: z.string().min(2).max(80),
+  email: emailSchema,
+  password: passwordSchema
+});
+
+export const adminCreateUserSchema = z.object({
+  name: z.string().min(2).max(80),
+  email: emailSchema,
+  phone: z.string().trim().max(40).optional(),
+  password: passwordSchema,
+  roleId: z.string().trim().optional().or(z.literal("").transform(() => undefined))
+});
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1)
+});
+
+export const forgotPasswordSchema = z.object({
+  email: emailSchema
+});
+
+export const resetPasswordSchema = z.object({
+  token: z.string().min(32),
+  password: passwordSchema,
+  confirmPassword: passwordSchema
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
+export const profileSchema = z.object({
+  name: z.string().min(2).max(80),
+  phone: z.string().trim().max(40).optional(),
+  image: z.string().trim().url().optional().or(z.literal("").transform(() => undefined))
+});
+
+export const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: passwordSchema,
+  confirmPassword: passwordSchema
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords do not match",
+  path: ["confirmPassword"]
+});
+
+const imageReferenceSchema = z
   .string()
-  .optional()
-  .transform((value) =>
-    value
-      ? value
-          .split(",")
-          .map((entry) => entry.trim())
-          .filter(Boolean)
-      : [],
-  );
+  .trim()
+  .min(1)
+  .refine((value) => isStoredImagePath(value) || z.string().url().safeParse(value).success, "Enter a valid stored image or image URL.");
 
-const formText = z.preprocess((value) => {
-  if (value === null || value === undefined) {
-    return undefined;
-  }
+export const productSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2).max(120),
+  description: z.string().min(10).max(2000),
+  priceCents: z.coerce.number().int().min(100),
+  stock: z.coerce.number().int().min(0),
+  category: z.string().min(2).max(80),
+  images: imageReferenceSchema.array().min(1),
+  featured: z.coerce.boolean().default(false),
+  active: z.coerce.boolean().default(true)
+});
 
-  if (typeof value !== "string") {
-    return value;
-  }
+export const ticketTypeSchema = z.object({
+  id: z.string().optional(),
+  name: z.string().min(2).max(80),
+  description: z.string().max(400).optional(),
+  priceCents: z.coerce.number().int().min(0),
+  quantity: z.coerce.number().int().min(1),
+  active: z.coerce.boolean().default(true)
+});
 
-  const trimmed = value.trim();
-  return trimmed.length > 0 ? trimmed : undefined;
-}, z.string().optional());
+export const eventSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(2).max(160),
+  description: z.string().min(20).max(4000),
+  startsAt: z.coerce.date(),
+  location: z.string().min(2).max(200),
+  bannerImage: imageReferenceSchema,
+  featured: z.coerce.boolean().default(false),
+  published: z.coerce.boolean().default(true),
+  ticketTypes: ticketTypeSchema.array().min(1)
+});
 
-const nullableString = formText.transform((value) => value ?? null);
-
-const enquiryTypeSchema = z.enum([
-  "GENERAL",
-  "TICKETS",
-  "MERCH",
-  "EVENT_BOOKING",
-  "SPONSORSHIP",
-  "SUPPORT",
+export const cartItemSchema = z.discriminatedUnion("kind", [
+  z.object({
+    kind: z.literal("product"),
+    productId: z.string(),
+    quantity: z.number().int().min(1).max(20)
+  }),
+  z.object({
+    kind: z.literal("ticket"),
+    ticketTypeId: z.string(),
+    quantity: z.number().int().min(1).max(10)
+  })
 ]);
 
-export const ticketCartItemSchema = z.object({
-  kind: z.enum(["TICKET", "PRODUCT"]),
-  id: z.string().min(1),
-  name: z.string().min(1),
-  quantity: z.coerce.number().int().positive(),
-  unitPriceCents: z.coerce.number().int().nonnegative(),
-  eventId: z.string().optional(),
-  productId: z.string().optional(),
-});
-
 export const checkoutSchema = z.object({
-  customerName: z.string().min(2, "Name is required"),
-  customerEmail: z.string().email("Enter a valid email"),
-  customerPhone: z.string().optional(),
-  notes: z.string().optional(),
-  discountCode: z.string().optional(),
-  shippingAddressLine1: nullableString,
-  shippingAddressLine2: nullableString,
-  shippingCity: nullableString,
-  shippingRegion: nullableString,
-  shippingPostalCode: nullableString,
-  shippingCountry: nullableString,
-  items: z.array(ticketCartItemSchema).min(1, "Cart is empty"),
-}).superRefine((data, ctx) => {
-  const hasMerchandise = data.items.some((item) => item.kind === "PRODUCT");
-
-  if (!hasMerchandise) {
-    return;
-  }
-
-  const requiredFields: Array<keyof Pick<
-    typeof data,
-    | "shippingAddressLine1"
-    | "shippingCity"
-    | "shippingRegion"
-    | "shippingPostalCode"
-    | "shippingCountry"
-  >> = [
-    "shippingAddressLine1",
-    "shippingCity",
-    "shippingRegion",
-    "shippingPostalCode",
-    "shippingCountry",
-  ];
-
-  for (const field of requiredFields) {
-    if (!data[field]) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: [field],
-        message: "Shipping details are required when your cart includes merch.",
-      });
-    }
-  }
+  customerName: z.string().min(2).max(120),
+  customerEmail: emailSchema,
+  discountCode: z.string().trim().max(40).optional(),
+  items: cartItemSchema.array().min(1).max(50)
 });
 
-export const ticketVerificationSchema = z.object({
-  code: z.string().min(4, "Scan a valid ticket code"),
+export const scanSchema = z.object({
+  payload: z.string().min(10).max(400)
 });
 
-export const eventUpsertSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(2),
-  slug: z.string().min(2),
-  description: z.string().min(20),
-  location: z.string().min(2),
-  venue: nullableString,
-  address: nullableString,
-  startsAt: z.string().min(1),
-  endsAt: z.string().min(1).optional(),
-  ticketPriceCents: z.coerce.number().int().nonnegative(),
-  capacity: z.coerce.number().int().positive().optional(),
-  imageUrl: z.string().min(2),
-  galleryUrls: csvToArray,
-  tags: csvToArray,
-  featured: z.coerce.boolean().optional().default(false),
-  published: z.coerce.boolean().optional().default(true),
+export const contactSchema = z.object({
+  name: z.string().min(2).max(100),
+  email: emailSchema,
+  phone: z.string().trim().max(40).optional(),
+  subject: z.string().min(3).max(140),
+  message: z.string().min(10).max(2000)
 });
 
-export const productUpsertSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2),
-  slug: z.string().min(2),
-  description: z.string().min(20),
-  category: z.string().min(2),
-  priceCents: z.coerce.number().int().nonnegative(),
-  compareAtPriceCents: z.coerce.number().int().nonnegative().optional(),
-  inventory: z.coerce.number().int().nonnegative(),
-  imageUrl: z.string().min(2),
-  galleryUrls: csvToArray,
-  featured: z.coerce.boolean().optional().default(false),
-  active: z.coerce.boolean().optional().default(true),
-});
-
-export const testimonialUpsertSchema = z.object({
-  id: z.string().optional(),
-  name: z.string().min(2),
-  role: nullableString,
-  quote: z.string().min(10),
-  avatarUrl: nullableString,
-  rating: z.coerce.number().int().min(1).max(5),
-  featured: z.coerce.boolean().optional().default(false),
-  published: z.coerce.boolean().optional().default(true),
-});
-
-export const galleryUpsertSchema = z.object({
-  id: z.string().optional(),
-  title: z.string().min(2),
-  slug: z.string().min(2),
-  description: nullableString,
-  imageUrl: z.string().min(2),
-  downloadUrl: nullableString,
-  altText: nullableString,
-  eventId: nullableString,
-  featured: z.coerce.boolean().optional().default(false),
-  published: z.coerce.boolean().optional().default(true),
-});
-
-export const discountCodeSchema = z.object({
-  id: z.string().optional(),
-  code: z.string().min(2),
-  description: nullableString,
+export const discountSchema = z.object({
+  code: z.string().trim().min(3).max(40).transform((value) => value.toUpperCase()),
   type: z.enum(["PERCENTAGE", "FIXED"]),
-  value: z.coerce.number().int().positive(),
-  active: z.coerce.boolean().optional().default(true),
-  usageLimit: z.coerce.number().int().positive().optional(),
-  expiresAt: z.string().min(1).optional(),
+  value: z.coerce.number().int().min(1),
+  usageLimit: z.coerce.number().int().min(1).optional().or(z.literal("").transform(() => undefined)),
+  active: z.coerce.boolean().default(true),
+  expiresAt: z.coerce.date().optional().or(z.literal("").transform(() => undefined))
 });
 
-export const socialSyncSchema = z.object({
-  source: z.enum(["FACEBOOK", "INSTAGRAM", "MANUAL"]).default("FACEBOOK"),
+export const pricingRuleSchema = z.object({
+  type: z.enum(["EARLY_BIRD", "INVENTORY_TIER", "LIMITED_TIME"]),
+  name: z.string().min(2).max(120),
+  eventId: z.string().optional(),
+  ticketTypeId: z.string().optional(),
+  startsAt: z.coerce.date().optional().or(z.literal("").transform(() => undefined)),
+  endsAt: z.coerce.date().optional().or(z.literal("").transform(() => undefined)),
+  threshold: z.coerce.number().int().min(0).optional().or(z.literal("").transform(() => undefined)),
+  priceCents: z.coerce.number().int().min(0).optional().or(z.literal("").transform(() => undefined)),
+  discountBps: z.coerce.number().int().min(0).max(10000).optional().or(z.literal("").transform(() => undefined)),
+  active: z.coerce.boolean().default(true)
 });
 
-export const enquirySchema = z.object({
-  name: z.string().min(2, "Name is required"),
-  email: z.string().email("Enter a valid email"),
-  phone: nullableString,
-  type: enquiryTypeSchema.default("GENERAL"),
-  subject: z.string().min(3, "Subject is required"),
-  message: z.string().min(10, "Write a little more detail"),
+export const reviewSchema = z.object({
+  productId: z.string().optional(),
+  eventId: z.string().optional(),
+  rating: z.coerce.number().int().min(1).max(5),
+  comment: z.string().max(1000).optional()
 });
 
-export type CheckoutInput = z.infer<typeof checkoutSchema>;
-export type EventUpsertInput = z.infer<typeof eventUpsertSchema>;
-export type ProductUpsertInput = z.infer<typeof productUpsertSchema>;
-export type TestimonialUpsertInput = z.infer<typeof testimonialUpsertSchema>;
-export type GalleryUpsertInput = z.infer<typeof galleryUpsertSchema>;
-export type DiscountCodeInput = z.infer<typeof discountCodeSchema>;
-export type EnquiryInput = z.infer<typeof enquirySchema>;
+export const refundSchema = z.object({
+  orderId: z.string(),
+  reason: z.string().min(10).max(1500)
+});
+
+export const campaignSchema = z.object({
+  name: z.string().min(2).max(120),
+  subject: z.string().min(3).max(160),
+  body: z.string().min(10).max(5000),
+  audience: z.enum(["ALL_USERS", "EVENT_ATTENDEES", "HIGH_VALUE_CUSTOMERS", "VIP_CUSTOMERS"])
+});
+
+export const roleBuilderSchema = z.object({
+  name: z.string().trim().min(2).max(60).transform((value) => value.toUpperCase().replace(/[^A-Z0-9_]+/g, "_")),
+  description: z.string().trim().max(300).optional()
+});
+
+export const tenantSettingsSchema = z.object({
+  name: z.string().trim().min(2).max(120),
+  supportEmail: emailSchema.optional().or(z.literal("").transform(() => undefined)),
+  whatsappNumber: z.string().trim().max(30).regex(/^\d+$/, "Use digits only").optional().or(z.literal("").transform(() => undefined)),
+  platformFeeBps: z.coerce.number().int().min(0).max(3000),
+  fixedTicketFeeCents: z.coerce.number().int().min(0).max(100000)
+});
