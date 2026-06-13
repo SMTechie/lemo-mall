@@ -77,7 +77,7 @@ export async function AdminNav() {
           <p className="truncate text-xs text-muted-foreground">Commerce and access control</p>
         </div>
       </div>
-      <nav className="grid gap-5 overflow-x-auto px-3 py-4 lg:flex-1 lg:content-start lg:overflow-y-auto lg:overflow-x-hidden">
+      <nav className="overflow-x-auto px-3 py-3 lg:grid lg:flex-1 lg:content-start lg:gap-5 lg:overflow-y-auto lg:overflow-x-hidden lg:py-4">
         <AdminNavLinks groups={visibleGroups} />
       </nav>
       <div className="border-t bg-background p-3">

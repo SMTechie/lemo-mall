@@ -2,6 +2,7 @@
 
 import bcrypt from "bcryptjs";
 import { AuthError } from "next-auth";
+import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { absoluteUrl } from "@/lib/utils";
@@ -108,9 +109,11 @@ export async function resetPasswordAction(_: AuthState, formData: FormData): Pro
 }
 
 export async function logoutAction() {
-  await signOut({ redirectTo: "/" });
+  await signOut({ redirect: false });
+  redirect("/");
 }
 
 export async function adminLogoutAction() {
-  await signOut({ redirectTo: "/login" });
+  await signOut({ redirect: false });
+  redirect("/login");
 }

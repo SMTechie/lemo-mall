@@ -26,20 +26,20 @@ export default async function HomePage() {
 
   return (
     <main>
-      <section className="relative min-h-[700px] overflow-hidden border-b">
+      <section className="relative min-h-[620px] overflow-hidden border-b sm:min-h-[700px]">
         <Image src={festivalHeroImage} alt="" fill priority sizes="100vw" className="object-cover" />
         <div className="absolute inset-0 bg-black/55" />
         <div className="absolute inset-x-0 bottom-0 h-32 bg-[linear-gradient(180deg,transparent,hsl(var(--background)))]" />
-        <div className="relative mx-auto flex min-h-[700px] max-w-7xl flex-col justify-center px-4 py-20 text-white sm:px-6 lg:px-8">
+        <div className="relative mx-auto flex min-h-[620px] max-w-7xl flex-col justify-center px-4 py-16 text-white sm:min-h-[700px] sm:px-6 sm:py-20 lg:px-8">
           <div className="max-w-4xl">
             <div className="flex flex-wrap gap-2">
               <Badge variant="secondary" className="w-fit">Re ja joy all year round</Badge>
               <Badge className="w-fit bg-accent text-accent-foreground">Now or Never</Badge>
             </div>
-            <h1 className="mt-5 max-w-4xl text-5xl font-bold tracking-normal sm:text-7xl">
+            <h1 className="mt-5 max-w-4xl text-4xl font-bold tracking-normal sm:text-7xl">
               Lemo Fest is back with a full-colour 2026 season.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg text-white/85">
+            <p className="mt-5 max-w-2xl text-base text-white/85 sm:text-lg">
               Tickets, stages, merch, bar-card support and festival updates for everyone moving with the Lemo Fest community.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">

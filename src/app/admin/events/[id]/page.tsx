@@ -34,7 +34,7 @@ export default async function EditEventPage({ params }: { params: Promise<{ id: 
             <div className="rounded-md border p-3">
               <p className="mb-3 text-sm font-medium">Ticket types</p>
               {event.ticketTypes.map((ticket) => (
-                <div key={ticket.id} className="mb-3 grid grid-cols-3 gap-2">
+                <div key={ticket.id} className="mb-3 grid gap-2 sm:grid-cols-3">
                   <Input name="ticketName" defaultValue={ticket.name} />
                   <Input name="ticketPriceCents" type="number" defaultValue={ticket.priceCents} />
                   <Input name="ticketQuantity" type="number" defaultValue={ticket.quantity} />

@@ -22,7 +22,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
             <input type="hidden" name="id" value={product.id} />
             <div className="grid gap-2"><Label>Name</Label><Input name="name" defaultValue={product.name} required /></div>
             <div className="grid gap-2"><Label>Description</Label><Textarea name="description" defaultValue={product.description} required /></div>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               <div className="grid gap-2"><Label>Price cents</Label><Input name="priceCents" type="number" defaultValue={product.priceCents} required /></div>
               <div className="grid gap-2"><Label>Stock</Label><Input name="stock" type="number" defaultValue={product.stock} required /></div>
             </div>

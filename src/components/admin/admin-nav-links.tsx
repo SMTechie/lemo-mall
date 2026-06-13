@@ -84,23 +84,23 @@ export function AdminNavLinks({ groups, links }: { groups?: AdminNavGroup[]; lin
   }
 
   return (
-    <div className="grid gap-5">
+    <div className="flex min-w-max gap-2 lg:grid lg:min-w-0 lg:gap-5">
       {navGroups.map((group) => {
         const open = activeGroups.includes(group.label) || !collapsedGroups.includes(group.label);
 
         return (
-          <div key={group.label} className="grid gap-1.5">
+          <div key={group.label} className="contents lg:grid lg:gap-1.5">
             <button
               type="button"
               onClick={() => toggleGroup(group.label)}
-              className="flex h-8 items-center justify-between rounded-md px-3 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+              className="hidden h-8 items-center justify-between rounded-md px-3 text-left text-[11px] font-semibold uppercase tracking-wide text-muted-foreground transition-colors hover:bg-muted hover:text-foreground lg:flex"
               aria-expanded={open}
             >
               <span>{group.label}</span>
               <ChevronDown className={cn("h-3.5 w-3.5 transition-transform", !open && "-rotate-90")} />
             </button>
             {open ? (
-              <div className="grid gap-1">
+              <div className="contents lg:grid lg:gap-1">
                 {group.items.map(({ href, label, icon }) => {
                   const Icon = icons[icon];
                   const active = href === "/admin" ? pathname === href : pathname.startsWith(href);
@@ -111,8 +111,8 @@ export function AdminNavLinks({ groups, links }: { groups?: AdminNavGroup[]; lin
                       href={href}
                       aria-current={active ? "page" : undefined}
                       className={cn(
-                        "inline-flex h-9 shrink-0 items-center gap-3 rounded-md px-3 text-sm font-medium text-foreground/75 transition-colors hover:bg-muted hover:text-foreground lg:w-full",
-                        active && "bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
+                        "inline-flex h-9 shrink-0 items-center gap-2 rounded-full border bg-background px-3 text-sm font-medium text-foreground/75 transition-colors hover:bg-muted hover:text-foreground lg:w-full lg:gap-3 lg:rounded-md lg:border-0 lg:bg-transparent",
+                        active && "border-primary/30 bg-primary/10 text-primary hover:bg-primary/10 hover:text-primary"
                       )}
                     >
                       <Icon className="h-4 w-4" />

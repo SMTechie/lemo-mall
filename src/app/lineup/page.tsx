@@ -17,7 +17,7 @@ export default function LineupPage() {
       <section className="border-b bg-foreground text-background">
         <div className="mx-auto max-w-7xl px-4 py-14 sm:px-6 lg:px-8">
           <Badge variant="secondary">Artists loading</Badge>
-          <h1 className="mt-4 max-w-3xl text-5xl font-bold tracking-normal">Line-up announcements are coming to the stage.</h1>
+          <h1 className="mt-4 max-w-3xl text-4xl font-bold tracking-normal sm:text-5xl">Line-up announcements are coming to the stage.</h1>
           <p className="mt-4 max-w-2xl text-background/75">
             Follow the Lemo Fest line-up hub for artist drops, hosts, DJs, stage times and special guests as they are announced.
           </p>
