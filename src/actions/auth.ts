@@ -36,9 +36,9 @@ export async function registerAction(_: AuthState, formData: FormData): Promise<
   await signIn("credentials", {
     email: parsed.data.email,
     password: parsed.data.password,
-    redirectTo: "/account/orders"
+    redirect: false
   });
-  return {};
+  redirect("/account/orders");
 }
 
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
@@ -49,13 +49,13 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     await signIn("credentials", {
       email: parsed.data.email,
       password: parsed.data.password,
-      redirectTo: "/account/orders"
+      redirect: false
     });
   } catch (error) {
     if (error instanceof AuthError) return { error: "Invalid email or password." };
     throw error;
   }
-  return {};
+  redirect("/account/orders");
 }
 
 export async function forgotPasswordAction(_: AuthState, formData: FormData): Promise<AuthState> {

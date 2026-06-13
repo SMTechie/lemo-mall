@@ -7,6 +7,15 @@ import { getUserAccess } from "@/lib/permissions";
 
 const authSecret = process.env.AUTH_SECRET ?? process.env.NEXTAUTH_SECRET ?? "development-only-secret-change-before-deploy";
 
+function productionBaseUrl(baseUrl: string) {
+  const vercelUrl = process.env.VERCEL_PROJECT_PRODUCTION_URL ?? process.env.VERCEL_URL;
+  if (process.env.NODE_ENV === "production" && baseUrl.includes("localhost") && vercelUrl) {
+    return vercelUrl.startsWith("http") ? vercelUrl.replace(/\/$/, "") : `https://${vercelUrl.replace(/\/$/, "")}`;
+  }
+
+  return baseUrl.replace(/\/$/, "");
+}
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   secret: authSecret,
   trustHost: true,
@@ -64,6 +73,24 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         token.permissions = access.permissions;
       }
       return token;
+    },
+    redirect({ url, baseUrl }) {
+      const safeBaseUrl = productionBaseUrl(baseUrl);
+
+      if (url.startsWith("/")) return `${safeBaseUrl}${url}`;
+
+      try {
+        const target = new URL(url);
+        if (process.env.NODE_ENV === "production" && target.hostname === "localhost") {
+          return `${safeBaseUrl}${target.pathname}${target.search}${target.hash}`;
+        }
+
+        if (target.origin === safeBaseUrl) return target.toString();
+      } catch {
+        return safeBaseUrl;
+      }
+
+      return safeBaseUrl;
     },
     session({ session, token }) {
       if (session.user) {
