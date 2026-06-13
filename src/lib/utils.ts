@@ -22,13 +22,17 @@ export function slugify(value: string) {
 }
 
 export function siteUrl() {
-  const url =
+  const configuredUrl =
     process.env.NEXT_PUBLIC_APP_URL ??
     process.env.AUTH_URL ??
-    process.env.NEXTAUTH_URL ??
+    process.env.NEXTAUTH_URL;
+  const vercelUrl =
     process.env.VERCEL_PROJECT_PRODUCTION_URL ??
-    process.env.VERCEL_URL ??
-    "http://localhost:3000";
+    process.env.VERCEL_URL;
+  const url =
+    process.env.NODE_ENV === "production" && configuredUrl?.includes("localhost")
+      ? vercelUrl ?? configuredUrl
+      : configuredUrl ?? vercelUrl ?? "http://localhost:3000";
 
   return url.startsWith("http") ? url.replace(/\/$/, "") : `https://${url.replace(/\/$/, "")}`;
 }

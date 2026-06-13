@@ -76,14 +76,15 @@ Admin product and event images are uploaded through `/api/admin/images` and stor
 1. Import the GitHub repo into Vercel.
 2. Add all variables from `.env.example` in Vercel Project Settings.
 3. Use the Neon pooled connection string for `DATABASE_URL`.
-4. Register the Yoco webhook endpoint:
+4. Make sure `NEXT_PUBLIC_APP_URL`, `AUTH_URL` and `NEXTAUTH_URL` are not set to `http://localhost:3000` in Vercel. Use your live `https://...` domain, or leave `AUTH_URL`/`NEXTAUTH_URL` unset.
+5. Register the Yoco webhook endpoint:
 
 ```text
 https://your-domain.vercel.app/api/yoco/webhook
 ```
 
-5. Run `npm run db:push` against production from a trusted machine or CI step.
-6. Deploy. The app avoids traditional servers and uses Vercel-compatible Route Handlers and Server Actions.
+6. Run `npm run db:push` against production from a trusted machine or CI step.
+7. Deploy. The app avoids traditional servers and uses Vercel-compatible Route Handlers and Server Actions.
 
 ## Important Routes
 
